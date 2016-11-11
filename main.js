@@ -166,21 +166,19 @@ MapApplication.prototype.addListeners = function () {
     });
 
     $("#sync1").bootstrapSwitch('state', false);
-    $("#sync2").bootstrapSwitch('state', false);
 
     $("#sync1").on('switchChange.bootstrapSwitch', function(event, state) {
-       if(state==true){
-           self.map2.sync(self.map1);
-       }else{
-           self.map2.unsync(self.map1);
-       }
-    });
-    $("#sync2").on('switchChange.bootstrapSwitch', function(event, state) {
-        if(state==true){
-            self.map1.sync(self.map2);
-        }else{
-            self.map1.unsync(self.map2);
+        var coord_sx=[];
+        var coord_dx=[];
+        for(var x=0;x<4;x++){
+            coord_sx.push(self.markers1.markers[x]);
+            coord_dx.push(self.markers2.markers[x]);
         }
+       if(state==true){
+           self.map1.sync(self.map2, null, coord_sx, coord_dx);
+       }else{
+           self.map1.unsync(self.map2);
+       }
     });
 
 
@@ -340,6 +338,9 @@ MapApplication.prototype.addJson = function (map, data) {
 
                         self.addMarkerToInterface(m1, markerNumber, e.target._map._container.id);
 
+                        if(mainMarkers.markers.length>3 && oppositeMarkers.markers.length>3){
+                            $("#sync1").bootstrapSwitch("toggleDisabled");
+                        }
                     }
                 }
             }
@@ -400,6 +401,9 @@ MapApplication.prototype.removeMarker = function (tempMarker, mainMarkers, oppos
 
             }
 
+        }
+        if(mainMarkers.markers.length<=3 || oppositeMarkers.markers.length<=3){
+            $("#sync1").bootstrapSwitch("toggleDisabled");
         }
     });
 };

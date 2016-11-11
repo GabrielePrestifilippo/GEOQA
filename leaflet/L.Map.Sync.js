@@ -9,7 +9,7 @@
     };
 
     L.Map = L.Map.extend({
-        sync: function (map, options) {
+        sync: function (map, options, coord_sx, coord_dx) {
             this._initSync();
             options = L.extend({
                 noInitialSync: false,
@@ -28,7 +28,11 @@
             }
 
             if (!options.noInitialSync) {
-                map.setView(this.getCenter(), this.getZoom(), NO_ANIMATION);
+                var t=Transformation;
+                t.setPoints(coord_dx,coord_sx);
+                var newPoint=t.transform([this.getCenter().lat,this.getCenter().lng]);
+                var newCenter=L.latLng(newPoint[0],newPoint[1]);
+                map.setView(newCenter, this.getZoom(), NO_ANIMATION);
             }
             if (options.syncCursor) {
                 map.cursor = L.circleMarker([0, 0], options.syncCursorMarkerOptions).addTo(map);
