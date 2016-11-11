@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+
+    <meta charset="UTF-8">
+    <title>GEOQA - Geomatics and Earth Observation Quality Assessment</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script src="leaflet/leaflet.js" type="text/javascript"></script>
+    <script src="leaflet/leaflet-areaselect.js" type="text/javascript"></script>
+    <script src="leaflet/osmtogeojson.js" type="text/javascript"></script>
+    <script src="js/bootstrap.min.js" type="text/javascript"></script>
+    <script src="leaflet/L.Map.Sync.js" type="text/javascript"></script>
+    <script src="js/bootstrap-switch.min.js" type="text/javascript"></script>
+    <script src="js/math.js" type="text/javascript"></script>
+    <script src="js/transformation.js" type="text/javascript"></script>
+    <link rel="stylesheet" href="leaflet/leaflet.css"/>
+    <link rel="stylesheet" href="css/font-awesome.min.css"/>
+    <link rel="stylesheet" href="css/bootstrap.min.css/">
+    <link rel="stylesheet" href="css/bootstrap-switch.min.css/">
+    <link href="https://fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Oswald" rel="stylesheet">
+    <style>
+        body {
+            display: block;
+            margin: 0px;
+            font-family: 'PT Sans', sans-serif;
+
+        }
+
+        ::-webkit-scrollbar {
+            width: 10px; /* for vertical scrollbars */
+            height: 12px; /* for horizontal scrollbars */
+            border-radius: 50%;
+
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        #map1, #map2 {
+            position: relative;
+            width: 50%;
+            height: 100%;
+            float: left;
+            border: 0px solid gray;
+        }
+        #resultMap{
+            position: relative;
+            width: 100%;
+            height: 100%;
+            float: left;
+            display: none;
+        }
+        #resultData{
+            position: relative;
+            width: 100%;
+            float: left;
+            display: none;
+            margin-left:0px;
+            margin-bottom:20px;
+        }
+
+        #page {
+            height: 40vw;
+            width: 100%;
+            position: relative;
+        }
+
+        .number-icon {
+            background-image: url("Map-icon.png");
+            text-align: center;
+            color: darkblue;
+            line-height: 0px;
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        #messageContainer {
+            position: absolute;
+            z-index: 99999;
+            top: 30%;
+            margin-left: -25%;
+            left: 50%;
+            background-color: rgba(0, 44, 111, 0.6);
+            color: white;
+            font-size: 16px;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            display: none;
+            opacity: 0;
+            transition: all 0.3s;
+        }
+
+        span.input-group-addon {
+            text-align: left;
+        }
+
+        #parameters, #shapes {
+            max-height: 0px;
+            width: 100%;
+            transition: all 0.5s;
+            overflow: hidden;
+            padding-left: 5px;
+            padding-right: 5px;
+        }
+
+        #parameters {
+            padding-left: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 0px;
+        }
+
+        .btn-group {
+            width: 100%;
+        }
+
+        #markerList {
+            width: 20%;
+            height: 100%;
+            text-align: center;
+            float: left;
+        }
+
+        #m1List, #m2List {
+            text-align: right;
+            position: absolute;
+            z-index: 9999;
+            float: right;
+            overflow: hidden;
+            right: 10px;
+            max-height: 0px;
+            margin-top: 42px;
+            transition: all 0.5s;
+            overflow-y: auto;
+        }
+
+        .btn-responsive {
+            white-space: normal !important;
+            word-wrap: break-word;
+        }
+
+        .marker {
+            color: #000;
+            font-size: 16px;
+            position: relative;
+            width: 100%;
+            height: 36px;
+        }
+
+        .nameMarker {
+            float: left;
+            position: relative;
+        }
+
+        .buttonMarker {
+            float: right;
+            position: relative;
+        }
+
+        #buttonM1, #buttonM2 {
+            text-align: center;
+            position: absolute;
+            z-index: 999;
+            line-height: 14px;
+            padding: 10px;
+            right: 10px;
+            font-size: 14px;
+            margin-top: 5px;
+            float: right;
+            color: white;
+            background-color: #337ab7;
+            border-radius: 6px;
+        }
+
+        #footer {
+            width: 100%;
+            padding: 20px;
+            background-color: #2b669a;
+            color: white;
+            text-align: center;
+        }
+        #footer a {
+            color: rgb(198, 255, 248);
+            font-style: italic;
+        }
+        #banner {
+            width: 100%;
+            height: 80px;
+            background-color: white;
+            text-align: center;
+            line-height: 80px;
+        }
+
+        #logo {
+            font-size: 22px;
+            font-family: 'Oswald', sans-serif;
+            color: #008cde;
+        }
+
+        #menu {
+            width: 30%;
+            height: 100%;
+            margin-left: -30%;
+            background-color: rgba(255, 255, 255, 0.6);
+            margin-top: 60px;
+            float: left;
+            position: absolute;
+            z-index: 99999;
+            overflow: hidden;
+            transition: all 0.5s;
+        }
+
+        #openMenu {
+            width: 50px;
+            height: 80px;
+            float: left;
+            line-height: 80px;
+        }
+
+        .menuItem {
+            width: 100%;
+            height: 40px;
+            background-color: rgb(255, 255, 255);
+            color: #adadad;
+            text-align: left;
+            font-size: 17px;
+            line-height: 36px;
+            padding-left: 8px;
+            border-left: 3px solid;
+        }
+
+        .menuItem:hover {
+            background-color: #f7f7f7;
+            color: #1aca9f;
+        }
+
+        .iconMap {
+            float: right;
+            padding-right: 20px;
+            line-height: 36px;
+            font-size: 20px;
+        }
+
+        #instructions {
+            width: 100%;
+            height: 100%;
+            padding: 10px;
+        }
+
+        h2 {
+            color: #515169;
+        }
+
+        p {
+            color: #292929;
+        }
+
+        li {
+            list-style-type: upper-roman;
+            font-size: 20px;
+        }
+        #loading {
+            z-index: 999999;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.4);
+            display: block;
+            text-align: center;
+        }
+
+        #loading img {
+            max-width: 100px;
+            margin-top: 20%;
+        }
+
+        .bootstrap-switch {
+            line-height: 14px;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        #mapAfterControls{
+            width: 100%;
+            height: 50px;
+            position: relative;
+        }
+        #controlLeft{
+            width:50%;
+            float: left;
+            position: relative;
+            padding-left:10px;
+        }
+        #controlRight{
+            width:50%;
+            float: left;
+            position: relative;
+            padding-left:10px;
+        }
+    </style>
+</head>
+<body>
+<div id="loading" style="display: none;"><img src="loading.gif"></div>
+<div id="menu">
+    <div id="buttons">
+        <div class="menuItem" style="border-color: #16d21b;" id="openShapeMenu"> New Map <i class="fa fa-map iconMap"
+                                                                                            aria-hidden="true"></i>
+        </div>
+        <div class="menuItem" style="border-color: #e4ec25;" id="openParamMenu"> Parameters <i
+                class="fa fa-wrench iconMap" aria-hidden="true"></i>
+        </div>
+        <div class="menuItem" style="border-color: #d93a18;" id="sendMenu"> Run Program <i class="fa fa-play iconMap"
+                                                                                           aria-hidden="true"></i></div>
+    </div>
+    <br>
+    <div id="shapes">
+        <div class="btn-group" role="group" aria-label="...">
+            <div class="form-group">
+
+                <select class="form-control" id="selectedMap">
+                    <option value="1" selected="selected">Map 1</option>
+                    <option value="2">Map 2</option>
+                </select>
+            </div>
+            <label id="fileSelection" class="btn btn-default btn-file">
+
+                <div id="nameFile">Browse</div>
+                <input type="file" style="display: none;" id="myFile1" name="file">
+
+            </label>
+
+
+            <input class="bigButton btn btn-default" type="button" id="send" value="Upload">
+            <input class="bigButton btn btn-default" type="button" id="sendOverpass" value="Retrieve OSM">
+
+
+        </div>
+
+        <div class="btn-group" role="group" aria-label="...">
+
+
+        </div>
+
+    </div>
+    <div id="parameters" class="row">
+
+        <div class="input-group">
+            <span class="input-group-addon">Angle</span>
+            <input id="angleParam" type="text" placeholder="Angle" class="form-control">
+        </div>
+        <div class="input-group">
+            <span class="input-group-addon">Sigma</span>
+            <input id="sigmaParam" type="text" placeholder="Sigma" class="form-control">
+        </div>
+        <div class="input-group">
+            <span class="input-group-addon">Maximum distance</span>
+            <input id="distanceParam" type="text" placeholder="Maximum distance" class="form-control">
+        </div>
+        <div class="input-group">
+            <span class="input-group-addon">Number of iterations</span>
+            <input id="iterationsParam" type="text" placeholder="Number of iterations" class="form-control">
+        </div>
+
+    </div>
+
+</div>
+<div id="banner">
+    <div id="openMenu"><i class="fa fa-bars" style="font-size: 24px" aria-hidden="true"></i></div>
+    <div id="logo">GEOQA - Geomatics and Earth Observation Quality Assessment</div>
+</div>
+<div id="messageContainer" style="display: none; opacity: 0;">Selection performed</div>
+<div id="page">
+    <div id="map1">
+        <div id="m1List">
+        </div>
+        <div id="buttonM1">Markers</div>
+
+
+    </div>
+    <div id="map2">
+        <div id="m2List"></div>
+        <div id="buttonM2">Markers</div>
+
+    </div>
+
+    <div id="resultMap">
+
+    </div>
+<div id="resultData" class="row">
+        <div class="input-group">
+            <span class="input-group-addon">Precision</span>
+            <input id="precision" type="number" disabled class="form-control">
+        </div>
+        <div class="input-group">
+            <span class="input-group-addon">Standard Deviation</span>
+            <input id="stdev" type="text" disabled class="form-control">
+        </div>
+        <div class="input-group">
+            <span class="input-group-addon">Mean Error</span>
+            <input id="meanerror" type="text" disabled class="form-control">
+        </div>
+</div>
+
+</div>
+<div id="mapAfterControls">
+    <div id="controlLeft"><label style="float: left; line-height: 50px;";> Sync with Map #2 &nbsp; &nbsp;  </label><input type="checkbox" data-size="small" id="sync1"></div>
+
+    <div id="controlRight"><label style="float: left;line-height: 50px;";> Sync with Map #1 &nbsp;  &nbsp; </label><input type="checkbox" data-size="small" id="sync2"></div>
+
+</div>
+<div id="instructions">
+    <h2>What is GEOQA</h2>
+    <br>
+    <p>GEOQA - Geomatics and Earth Observation Quality Assessment - is a tool to compare two vector maps.<br>
+        It allows to upload two shapefiles and then select some points in order to overlap the maps and retrieve the
+        differences.
+    </p>
+    <h2>How to use the application</h2>
+    <br>
+    <p>
+    <li>Upload a map</li>
+    <p> The first required step is to upload a new shapefile containing some buildings.<br>
+        To do so, open the left side menu from the menu button  &nbsp;<i class="fa fa-bars" style="font-size: 24px"
+                                                                 aria-hidden="true"></i>
+        <br>
+        Select "New Map" and select in which map you want to upload the shapefile (map 1 or map 2).<br>
+        Then Browse your computer for a .zip file containing the shapefile components and press Upload.<br>
+        You will be now required to upload another map to compare. However, you can retrieve the shapes from
+        OpenStreetMap.<br>
+        To do so, select an area in the other map by holding the ctrl or the shift key and dragging the pointer over the
+        selected area.<br>
+        When the selection is performed you can click on "Retrieve OSM" to download the data from OpenStreetMap.</p>
+
+    <br>
+    <li>Select Pair</li>
+    <p>In order to overlap the two maps, you are required to select few corresponding point in both maps.<br>
+        To do so, select first a point in a map, then select the corresponding in the other map.<br>
+        If by mistake you select a wrong point you can delete it by clicking on it and removing it.<br>
+        A list of selected point is available by clicking on the "Marker" button in the top right corner of the map.</p>
+
+    <br>
+    <li>Set Parameters</li>
+    <p>To execute the program you can select few parameters:
+        .....<br>
+        .....<br>
+        .....<br>
+    </p>
+    <br>
+    <li>Run the program</li>
+    <p>If everything is set up correctly you can run the program by clicking the "Run the program" button.</p>
+    <br>
+
+</div>
+
+<div id="footer">
+    Website developed by <a href="http://geolab.como.polimi.it/">GeoLab Como</a> <br>
+    Contact Developer <a href="mailto:gabriele.prestifilippo@polimi.it">Gabriele Prestifilippo</a>
+</div>
+<script src="main.js"></script>
+<script>
+    var mapApp = new MapApplication();
+</script>
+</body>
+</html>
