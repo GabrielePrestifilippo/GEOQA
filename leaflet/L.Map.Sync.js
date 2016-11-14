@@ -2,7 +2,26 @@
  * Extends L.Map to synchronize the interaction on one map to one or more other maps.
  */
 
-(function () {
+
+// UMD
+(function(factory) {
+    var L;
+    if (typeof define === 'function' && define.amd) {
+        // AMD
+        define(['leaflet'], factory);
+    } else if (typeof module !== 'undefined') {
+        // Node/CommonJS
+        L = require('leaflet');
+        module.exports = factory(L);
+    } else {
+        // Browser globals
+        if (typeof window.L === 'undefined') {
+            throw new Error('Leaflet must be loaded first');
+        }
+        factory(window.L);
+    }
+})(function(L) {
+
     var NO_ANIMATION = {
         animate: false,
         reset: true
@@ -29,6 +48,7 @@
 
             if (!options.noInitialSync) {
                 var t=Transformation;
+                this.t=t;
                 t.setPoints(coord_dx,coord_sx);
                 var newPoint=t.transform([this.getCenter().lat,this.getCenter().lng]);
                 var newCenter=L.latLng(newPoint[0],newPoint[1]);
@@ -97,8 +117,11 @@
             L.extend(originalMap, {
                 setView: function (center, zoom, options, sync) {
                     if (!sync) {
+                        var self=this;
                         originalMap._syncMaps.forEach(function (toSync) {
-                            toSync.setView(center, zoom, options, true);
+                            var newPoint=self.t.transform([center.lat,center.lng]);
+                            var newCenter=L.latLng(newPoint[0],newPoint[1]);
+                            toSync.setView(newCenter, zoom, options, true);
                         });
                     }
                     return L.Map.prototype.setView.call(this, center, zoom, options);
@@ -124,8 +147,11 @@
             });
 
             originalMap.on('zoomend', function () {
+                var t= this.t;
                 originalMap._syncMaps.forEach(function (toSync) {
-                    toSync.setView(originalMap.getCenter(), originalMap.getZoom(), NO_ANIMATION);
+                    var newPoint=t.transform([originalMap.getCenter().lat,originalMap.getCenter().lng]);
+                    var newCenter=L.latLng(newPoint[0],newPoint[1]);
+                    toSync.setView(newCenter, originalMap.getZoom(), NO_ANIMATION);
                 });
             }, this);
 
@@ -136,7 +162,9 @@
                     L.DomUtil.setPosition(toSync.dragging._draggable._element, self._newPos);
                     toSync.eachLayer(function (layer) {
                         if (layer._google !== undefined) {
-                            layer._google.setCenter(originalMap.getCenter());
+                            var newPoint=self.t.transform([originalMap.getCenter().lat,originalMap.getCenter().lng]);
+                            var newCenter=L.latLng(newPoint[0],newPoint[1]);
+                            layer._google.setCenter(newCenter);
                         }
                     });
                     toSync.fire('moveend');
@@ -144,4 +172,4 @@
             };
         }
     });
-})();
+});
