@@ -1,0 +1,296 @@
+package server.software;
+
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import libSpline.*;
+import libGeometry.*;
+import libMath.*;
+import com.google.gson.Gson;
+
+public class SoftwareMain {
+
+    private Mappa source;
+	private Mappa target;
+	private double angolo;
+	private double sigma;
+	private double distanza;
+
+	public SoftwareMain() {
+		//fake data
+		//this.source=leggiMappa("./Dati/DBT.car");
+		//this.target=leggiMappa("./Dati/OSM.car");
+		
+		
+		//this.angolo=10;
+		//this.sigma=3;
+		//this.distanza=1;
+		
+    }
+
+    private String stimaSpline(Mappa source, Mappa target, int filtro, int numeroIterazioni) {
+        ArrayList<Punto3d> datiX = new ArrayList();
+        ArrayList<Punto3d> datiY = new ArrayList();
+        for (int c = 0; c < source.getNumeroPuntiOmologhi(); c++) {
+            Punto3d puntoTarget = target.getPuntoOmologo(c);
+            Punto3d puntoSource = source.getPuntoOmologo(c);
+            datiX.add(puntoSource.deltaX(puntoTarget));
+            datiY.add(puntoSource.deltaY(puntoTarget));
+        }
+        MultiSpline multiX = new MultiSpline(datiX, source.getBoundingBox());
+        MultiSpline multiY = new MultiSpline(datiY, source.getBoundingBox());
+        multiX.setFiltro(filtro);
+        multiY.setFiltro(filtro);
+        Matrix risultati;
+        double Fo;
+        int c = 0;
+        risultati = new Matrix(numeroIterazioni, 7);
+        boolean ripetiX = true;
+        boolean ripetiY = true;
+        while ((ripetiX || ripetiY) && c < numeroIterazioni) {
+            if (c > 0) {
+                if (ripetiX) {
+                    multiX.aggiungiLivello();
+                }
+                if (ripetiY) {
+                    multiY.aggiungiLivello();
+                }
+            }
+            if (ripetiX) {
+                if (multiX.calcolaMultiSpline() == 0) {
+                    multiX.interpolaSuOsservazioni();
+                } else {
+                    ripetiX = false;
+                }
+            }
+            if ((c > 0) && (ripetiX) && (risultati.get(c, 1) == risultati.get(c - 1, 1))) {
+                ripetiX = false;
+                multiX.eliminaLivello();
+                multiX.calcolaMultiSpline();
+            }
+            double varianzaX = multiX.getScarti().stimaVarianza(multiX.getNumeroParametri());
+            risultati.set(c, 0, multiX.getNumeroSpline());
+            risultati.set(c, 1, varianzaX);
+            if (c > 0) {
+                int N = multiX.getScarti().getRowDimension();
+                int n1 = (int) risultati.get(c - 1, 0);
+                int n1n2 = multiX.getNumeroSpline();
+                int n2 = n1n2 - n1;
+                double varianzaX_1 = risultati.get(c - 1, 1);
+                double num = (N - n1) * varianzaX_1 - (N - n1n2) * varianzaX;
+                double denum = n2 * varianzaX;
+                Fo = num / denum;
+                risultati.set(c, 2, Fo);
+                int n_Degrees = n2;
+                int d_Degrees = N - n1 - n2;
+                FisherDistribution fDis = new FisherDistribution(n_Degrees, d_Degrees);
+                Domain dominio = fDis.getDomain();
+                double min = dominio.getLowerBound();
+                double max = dominio.getUpperBound();
+                fDis.setParameters(min, max, 0.01, 1);
+                double Fteorico = fDis.getQuantile(1 - 0.025);
+                risultati.set(c, 6, Fteorico);
+            }
+            if (ripetiY) {
+                if (multiY.calcolaMultiSpline() == 0) {
+                    multiY.interpolaSuOsservazioni();
+                } else {
+                    ripetiY = false;
+                }
+            }
+            if ((c > 0) && (ripetiY) && (risultati.get(c, 3) == risultati.get(c - 1, 3))) {
+                ripetiY = false;
+                multiY.eliminaLivello();
+                multiY.calcolaMultiSpline();
+            }
+            double varianza_Y = multiY.getScarti().stimaVarianza(multiY.getNumeroParametri());
+            risultati.set(c, 3, multiY.getNumeroSpline());
+            risultati.set(c, 4, varianza_Y);
+            if (c > 0) {
+                int N = multiX.getScarti().getRowDimension();
+                int n1 = (int) risultati.get(c - 1, 3);
+                int n1n2 = multiY.getNumeroSpline();
+                int n2 = n1n2 - n1;
+                double varianzaY_1 = risultati.get(c - 1, 4);
+                double num = (N - n1) * varianzaY_1 - (N - n1n2) * varianza_Y;
+                double denum = n2 * varianza_Y;
+                Fo = num / denum;
+                risultati.set(c, 5, Fo);
+            }
+            c++;
+        }
+        Trasforma.conSpline(source, multiX, multiY);
+        return ("splineX;var(X);Fo(X);SplineY;var(Y);Fo(Y);Fteorico\r\n" + risultati.stampa());
+    }
+
+    public String stimaAffine(Mappa source, Mappa target, int numeroIterazioni, double angolo, double sigma, double distanzaMax) {
+        boolean ripeti = true;
+        int numeroIterazione = 0;
+        Matrix parametriStimati = null;
+        Mappa output;
+        Matrix risultato = new Matrix(numeroIterazioni, 8);
+        while (ripeti && numeroIterazione < numeroIterazioni) {
+            parametriStimati = Stima.calcolaParametri(source.getPuntiOmologhi(), target.getPuntiOmologhi());
+            for (int c = 0; c < parametriStimati.getRowDimension(); c++) {
+                risultato.set(numeroIterazione, c, parametriStimati.get(c));
+            }
+            risultato.set(numeroIterazione, 6, source.getNumeroPuntiOmologhi());
+            output = Mappa.creaCopia(source, "");
+            Trasforma.conAffine(output, parametriStimati);
+            risultato.set(numeroIterazione, 7, Stima.getVettoreScarti(output.getPuntiOmologhi(), target.getPuntiOmologhi()).stimaVarianza(6));
+            Stima.FischerGeometrico(source, target, output, angolo, sigma, distanzaMax);
+            numeroIterazione++;
+            if (source.getNumeroPuntiOmologhi() < 5) {
+                ripeti = false;
+            }
+            if ((numeroIterazione > 1) && ((float) risultato.get(numeroIterazione - 1, 7) == (float) risultato.get(numeroIterazione - 2, 7))) {
+                ripeti = false;
+            }
+        }
+        Trasforma.conAffine(source, parametriStimati);
+        return "e;f;a;b;c;d;punti;varianza\r\n" + risultato.stampa();
+    }
+
+    public Mappa leggiMappa(String nomeFile) {
+        String nomeFileOmologhi = nomeFile.substring(0, nomeFile.length() - 4) + ".omo";
+        Mappa map = Utility.leggi(nomeFile);
+        Utility.leggiOmologhi(nomeFileOmologhi, map);
+        System.out.println("Numero entita: " + map.getNumeroEntita());
+        System.out.println("Numero punti omologhi: " + map.getNumeroPuntiOmologhi());
+        return map;
+    }
+    
+    
+    public void setSource(String source){
+    	
+    	this.source=this.leggiMappa(source);
+    }
+    
+    public void setTarget(String target){
+    	this.target=this.leggiMappa(target);
+    }
+   
+    public void setParams(double angolo, double sigma, double distanza){
+    	this.angolo=angolo;
+    	this.sigma=sigma;
+    	this.distanza=distanza;
+    }
+    
+    public String execute() throws IOException{
+    	
+    	 SoftwareMain test = new SoftwareMain();
+    	 
+         Mappa source = this.source; 
+         Mappa target = this.target; 
+         
+         
+         //set omologhi source
+         //set omologhi target
+         
+         System.out.println(new Statistiche(source.getPuntiOmologhi(), target.getPuntiOmologhi()).stampa());
+
+         int numeroIterazioni = 5;
+         double angolo = this.angolo * Math.PI / 180;
+         double sigma = this.sigma;
+         double distanzaMax = this.distanza; 
+         
+         
+         String outputTrasfAffine = test.stimaAffine(source, target, numeroIterazioni, angolo, sigma, distanzaMax);
+         System.out.println(outputTrasfAffine);
+         
+         
+         //System.out.println("Numero punti omologhi 1: " + source.getNumeroPuntiOmologhi());
+         //System.out.println("Numero punti omologhi 2: " + target.getNumeroPuntiOmologhi());
+         System.out.println(new Statistiche(source.getPuntiOmologhi(), target.getPuntiOmologhi()).stampa());
+         Utility.salva("./Risultati/RisultatoAffine.car", source);
+         Utility.salvaOmologhi("./Risultati/RisultatoAffine.omo", source);
+
+         int filtraggio = 2;
+         numeroIterazioni = 4;
+         String outputTrasfSpline = test.stimaSpline(source, target, filtraggio, numeroIterazioni);
+         //System.out.println(outputTrasfSpline);
+        // return (new Statistiche(source.getPuntiOmologhi(), target.getPuntiOmologhi()).stampa());
+         //Utility.salva("./Risultati/RisultatoSpline.car", source);
+        // Utility.salvaOmologhi("./Risultati/risultatoSpline.omo", source);
+         
+         ResultJSON response=new ResultJSON();
+         
+         String statistiche=new Statistiche(source.getPuntiOmologhi(), target.getPuntiOmologhi()).stampa();
+         response.setStatistics(statistiche);
+
+         
+         String result="";
+         BufferedReader br = new BufferedReader(new FileReader("./Risultati/RisultatoAffine.car"));
+         try {
+             StringBuilder sb = new StringBuilder();
+             String line = br.readLine();
+
+             while (line != null) {
+                 sb.append(line);
+                 sb.append(System.lineSeparator());
+                 line = br.readLine();
+             }
+            result = sb.toString();
+         } finally {
+             br.close();
+         }
+         
+         String resultPoints="";
+         br = new BufferedReader(new FileReader("./Risultati/RisultatoAffine.omo"));
+         try {
+             StringBuilder sb = new StringBuilder();
+             String line = br.readLine();
+
+             while (line != null) {
+                 sb.append(line);
+                 sb.append(System.lineSeparator());
+                 line = br.readLine();
+             }
+             resultPoints = sb.toString();
+         } finally {
+             br.close();
+         }
+  
+         
+         response.setPoints(resultPoints);
+         response.setResultMap(result);
+         Gson gson = new Gson();
+         
+         String toSend=gson.toJson(response);
+         
+         return toSend;
+    }
+    
+    public static void main(String[] args) throws IOException {
+        SoftwareMain test = new SoftwareMain();
+        Mappa source = test.leggiMappa("./Dati/OSM00.car");
+        Mappa target = test.leggiMappa("./Dati/DBT00.car");
+        
+       
+        System.out.println(new Statistiche(source.getPuntiOmologhi(), target.getPuntiOmologhi()).stampa());
+
+        int numeroIterazioni = 3;
+        double angolo = 10 * Math.PI / 180;
+        double sigma = 3;
+        double distanzaMax = 10;
+        String outputTrasfAffine = test.stimaAffine(source, target, numeroIterazioni, angolo, sigma, distanzaMax);
+        System.out.println(outputTrasfAffine);
+        System.out.println("Numero punti omologhi 1: " + source.getNumeroPuntiOmologhi());
+        System.out.println("Numero punti omologhi 2: " + target.getNumeroPuntiOmologhi());
+        System.out.println(new Statistiche(source.getPuntiOmologhi(), target.getPuntiOmologhi()).stampa());
+        Utility.salva("./Risultati/RisultatoAffine.car", source);
+        Utility.salvaOmologhi("./Risultati/RisultatoAffine.omo", source);
+
+        int filtraggio = 2;
+        numeroIterazioni = 6;
+        String outputTrasfSpline = test.stimaSpline(source, target, filtraggio, numeroIterazioni);
+        System.out.println(outputTrasfSpline);
+        System.out.println(new Statistiche(source.getPuntiOmologhi(), target.getPuntiOmologhi()).stampa());
+        Utility.salva("./Risultati/RisultatoSpline.car", source);
+        Utility.salvaOmologhi("./Risultati/risultatoSpline.omo", source);
+   
+        
+    }
+}

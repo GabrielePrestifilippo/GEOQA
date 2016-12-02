@@ -1,0 +1,337 @@
+body {
+    display: block;
+    margin: 0px;
+    font-family: 'PT Sans', sans-serif;
+
+}
+
+::-webkit-scrollbar {
+    width: 10px;
+    height: 12px;
+    border-radius: 50%;
+
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+#map1, #map2 {
+    position: relative;
+    width: 50%;
+    height: 100%;
+    float: left;
+    border: 0px solid gray;
+}
+
+#resultMap {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    float: left;
+    display: none;
+}
+
+#resultData {
+    position: relative;
+    width: 100%;
+    float: left;
+    display: none;
+    margin-left: 0px;
+    margin-bottom: 20px;
+}
+
+#page {
+    height: 40vw;
+    width: 100%;
+    position: relative;
+}
+
+.number-icon {
+    background-image: url("../Map-icon.png");
+    text-align: center;
+    color: black;
+    line-height: 0px;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+#messageContainer {
+    position: absolute;
+    z-index: 99999;
+    top: 30%;
+    margin-left: -25%;
+    left: 50%;
+    background-color: rgba(0, 44, 111, 0.6);
+    color: white;
+    font-size: 16px;
+    padding: 10px;
+    border-radius: 5px;
+    text-align: center;
+    display: none;
+    opacity: 0;
+    transition: all 0.3s;
+}
+
+.labelClass {
+    background-color: white;
+    text-align: center;
+    margin-bottom: 0px;
+}
+
+span.input-group-addon {
+    text-align: left;
+}
+
+#parameters, #shapes, #featuresMenu {
+    max-height: 0px;
+    width: 100%;
+    transition: all 0.5s;
+    overflow: hidden;
+    padding-left: 5px;
+    padding-right: 5px;
+    overflow: auto;
+}
+
+
+.bootstrap-select.btn-group .dropdown-menu li a.opt {
+    padding-left: 1em;
+}
+
+.labelClass {
+    width: 100%;
+    padding: 5px;
+    border-radius: 8px;
+}
+
+.dropDownFeatures {
+    float: left !important;
+    width: 47% !important;
+}
+ul.dropdown-menu.inner {
+    overflow: hidden;
+}
+button#addAssociation {
+    margin-top: 10px;
+}
+
+#selectionFeatures {
+    display: none;
+}
+
+#parameters {
+    padding-left: 25px;
+}
+
+.form-group {
+    margin-bottom: 0px;
+}
+
+.btn-group {
+    width: 100%;
+}
+
+#markerList {
+    width: 20%;
+    height: 100%;
+    text-align: center;
+    float: left;
+}
+
+#m1List, #m2List {
+    text-align: right;
+    position: absolute;
+    z-index: 999;
+    float: right;
+    overflow: hidden;
+    right: 55px;
+    max-height: 0px;
+    margin-top: 42px;
+    transition: all 0.5s;
+    overflow-y: auto;
+}
+
+.btn-responsive {
+    white-space: normal !important;
+    word-wrap: break-word;
+}
+
+.marker {
+    color: #000;
+    font-size: 16px;
+    position: relative;
+    width: 100%;
+    height: 36px;
+}
+
+.nameMarker {
+    float: left;
+    position: relative;
+}
+
+.buttonMarker {
+    float: right;
+    position: relative;
+}
+
+#buttonM1, #buttonM2 {
+    text-align: center;
+    position: absolute;
+    z-index: 999;
+    line-height: 14px;
+    padding: 10px;
+    right: 55px;
+    font-size: 14px;
+    margin-top: 5px;
+    float: right;
+    color: white;
+    background-color: #337ab7;
+    border-radius: 6px;
+}
+
+#footer {
+    width: 100%;
+    padding: 20px;
+    background-color: #2b669a;
+    color: white;
+    text-align: center;
+}
+
+#footer a {
+    color: rgb(198, 255, 248);
+    font-style: italic;
+}
+
+#banner {
+    width: 100%;
+    height: 80px;
+    background-color: white;
+    text-align: center;
+    line-height: 80px;
+}
+
+#logo {
+    font-size: 22px;
+    font-family: 'Oswald', sans-serif;
+    color: #008cde;
+}
+
+#menu {
+    min-height: 100%;
+    width: 40%;
+    margin-left: -40%;
+    background-color: rgba(255, 255, 255, 0.6);
+    margin-top: 60px;
+    float: left;
+    position: absolute;
+    z-index: 99999;
+    overflow: hidden;
+    transition: all 0.5s;
+    border-bottom: 1px solid #cacaca;
+    border-right: 1px solid #cacaca;
+}
+
+.deleteAssociation {
+    float: left;
+    width: 6%;
+    color: #e00000;
+    height: 34px;
+    text-align: center;
+    padding-left: 1%;
+    line-height: 34px;
+}
+
+#openMenu {
+    width: 50px;
+    height: 80px;
+    float: left;
+    line-height: 80px;
+}
+
+.menuItem {
+    width: 100%;
+    height: 40px;
+    background-color: rgb(255, 255, 255);
+    color: #adadad;
+    text-align: left;
+    font-size: 17px;
+    line-height: 36px;
+    padding-left: 8px;
+    border-left: 3px solid;
+}
+
+.menuItem:hover {
+    background-color: #f7f7f7;
+    color: #1aca9f;
+}
+
+.iconMap {
+    float: right;
+    padding-right: 20px;
+    line-height: 36px;
+    font-size: 20px;
+}
+
+#instructions {
+    width: 100%;
+    height: 100%;
+    padding: 10px;
+}
+
+h2 {
+    color: #515169;
+}
+
+p {
+    color: #292929;
+}
+
+li {
+    list-style-type: upper-roman;
+    font-size: 20px;
+}
+
+#loading {
+    z-index: 999999;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.4);
+    display: block;
+    text-align: center;
+}
+
+#loading img {
+    max-width: 100px;
+    margin-top: 20%;
+}
+
+.bootstrap-switch {
+    line-height: 14px;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+#mapAfterControls {
+    width: 100%;
+    height: 50px;
+    position: relative;
+}
+
+#controlLeft {
+    width: 50%;
+    float: left;
+    position: relative;
+    padding-left: 10px;
+}
+
+#controlRight {
+    width: 50%;
+    float: left;
+    position: relative;
+    padding-left: 10px;
+}
