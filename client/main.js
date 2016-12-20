@@ -1,17 +1,26 @@
 requirejs.config({
     baseUrl: '.',
     shim: {
-        'bootstrap': {
+        bootstrap: {
             deps: ['jquery']
+        },
+        'bootstrapSwitch': {
+            deps: ['bootstrap']
+        },
+        'js/lib/bootstrap-select.min': {
+            deps: ['js/lib/bootstrap.min']
         },
         'leaflet-canvas': {
             deps: ['leaflet']
         },
         'leaflet-vector': {
             deps: ['leaflet']
+        },
+        'leaflet-marker': {
+            deps: ['leaflet']
         }
     },
-    waitSeconds: 0,
+    // waitSeconds: 0,
     paths: {
         'app': '../js',
         'jquery': 'js/lib/jquery-3.1.1.min',
@@ -21,42 +30,146 @@ requirejs.config({
         'leaflet-areaselect': 'leaflet/leaflet-areaselect',
         'leaflet-MapSync': 'leaflet/L.Map.Sync',
         'osmtogeojson': 'leaflet/osmtogeojson',
-        'bootstrap-switch': 'js/lib/bootstrap-switch.min',
-        'leaflet-vector': 'js/Leaflet.VectorGrid.bundled'
+        'bootstrapSwitch': 'js/lib/bootstrap-switch.min',
+        'leaflet-vector': 'js/Leaflet.VectorGrid.bundled',
+        'leaflet-marker': 'leaflet/leaflet.markercluster',
+
     }
 });
 
 var geo;
-define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI'],
-    function (GEOQA, $, L, GeoUI) {
+define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'js/lib/bootbox.min'],
+    function (GEOQA, $, L, GeoUI, bootbox) {
         this.UI = new GeoUI();
         var self = new GEOQA(this.UI);
         geo = self;
         $("#menu, #m2List, #m1List, #shapes, #parameters, #featuresMenu").prop("open", false);
         $('#send').click(function () {
+            $("#menu").css("margin-left", "-40%");
+            $("#menu").prop("open", false);
             $('#browseButton').click();
             "use strict";
             var file1 = document.getElementById('myFile1').files[0],
                 fd1 = new FormData();
             fd1.append('upload', file1);
             fd1.append('skipFailures', "true");
-
+            $("#nameFile").text("Browse")
             var numberMap = $("#selectedMap")[0].value;
-            numberMap == "1" ? numberMap = self.map1 : numberMap = self.map2;
-            $.ajax({
-                url: 'http://ogre.adc4gis.com/convert',
-                data: fd1,
-                processData: false,
-                contentType: false,
-                type: 'POST',
-                success: function (data) {
-                    self.addJson(numberMap, data);
+            var layerMap;
+            if (self.map1.over._layers.length > 1 && numberMap == String(1)) {
+                bootbox.confirm({
+                    title: "Attention!",
+                    message: "You have already uploaded a shape on the 1st map",
+                    buttons: {
+                        cancel: {
+                            label: '<i class="fa fa-times"></i> Go back'
+                        },
+                        confirm: {
+                            label: '<i class="fa fa-check"></i> Delete old shape'
+                        }
+                    },
+                    callback: function (result) {
+                        continueAdd(result);
+                    }
+
+                });
+            } else if (self.map2.over._layers.length > 1 && numberMap == String(2)) {
+                bootbox.confirm({
+                    title: "Attention!",
+                    message: "You have already uploaded a shape on the 2nd map",
+                    buttons: {
+                        cancel: {
+                            label: '<i class="fa fa-times"></i> Go back'
+                        },
+                        confirm: {
+                            label: '<i class="fa fa-check"></i> Delete old shape'
+                        }
+                    },
+                    callback: function (result) {
+                        continueAdd(result);
+                    }
+
+                });
+            } else {
+                continueAdd(true);
+            }
+            function continueAdd(result) {
+                if (result == true) {
+                    numberMap == "1" ? layerMap = self.lMap1 : layerMap = self.lMap2;
+                    numberMap == "1" ? numberMap = self.map1 : numberMap = self.map2;
+                    if (layerMap) {
+                        numberMap.removeLayer(layerMap);
+                    }
+
+                    $("#loading").show();
+                    $.ajax({
+                        url: 'http://ogre.adc4gis.com/convert',
+                        data: fd1,
+                        processData: false,
+                        contentType: false,
+                        type: 'POST',
+                        success: function (data) {
+                            self.addJson(numberMap, data);
+                            $("#loading").hide();
+                        }
+                    });
                 }
-            });
+            }
         });
         $("#sendOverpass").click(function () {
+            $("#menu").css("margin-left", "-40%");
+            $("#menu").prop("open", false);
             var numberMap = $("#selectedMap")[0].value;
-            self.overPass(numberMap);
+            if (self.map1.over._layers.length > 1 && numberMap == String(1)) {
+                bootbox.confirm({
+                    title: "Attention!",
+                    message: "You have already uploaded a shape on the 1st map",
+                    buttons: {
+                        cancel: {
+                            label: '<i class="fa fa-times"></i> Go back'
+                        },
+                        confirm: {
+                            label: '<i class="fa fa-check"></i> Delete old shape'
+                        }
+                    },
+                    callback: function (result) {
+                        continueAdd(result);
+                    }
+
+                });
+            } else if (self.map2.over._layers.length > 1 && numberMap == String(2)) {
+                bootbox.confirm({
+                    title: "Attention!",
+                    message: "You have already uploaded a shape on the 2nd map",
+                    buttons: {
+                        cancel: {
+                            label: '<i class="fa fa-times"></i> Go back'
+                        },
+                        confirm: {
+                            label: '<i class="fa fa-check"></i> Delete old shape'
+                        }
+                    },
+                    callback: function (result) {
+                        continueAdd(result);
+                    }
+
+                });
+            } else {
+                continueAdd(true);
+            }
+            function continueAdd(result) {
+                var numberMap = $("#selectedMap")[0].value;
+                var layerMap;
+                var mapToUse;
+                if (result == true) {
+                    numberMap == "1" ? layerMap = self.lMap1 : layerMap = self.lMap2;
+                    numberMap == "1" ? mapToUse = self.map1 : mapToUse = self.map2;
+                    if (layerMap) {
+                        mapToUse.removeLayer(layerMap);
+                    }
+                    self.overPass(numberMap);
+                }
+            }
         });
         //noinspection JSUnresolvedFunction
         $("#myFile1").on('change', function () {
@@ -110,13 +223,21 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI'],
             }
         });
         $("#sendMenu").click(function () {
+            $("#menu").css("margin-left", "-40%");
+            $("#menu").prop("open", false);
+            if (self.markers1.markers.length < 5 || self.markers2.markers.length < 5) {
+                bootbox.alert("Minimum 5 points required", function () {
+
+                });
+                return;
+            }
+
             var angleParam = $("#angleParam").val();
             var sigmaParam = $("#sigmaParam").val();
             var distanceParam = $("#distanceParam").val();
             var iterationsParam = $("#iterationsParam").val();
             var parameters = [angleParam, sigmaParam, distanceParam, iterationsParam];
-            $("#menu").css("margin-left", "-40%");
-            $("#menu").prop("open", false);
+
             $("#loading").show();
             self.sendData(parameters);
 

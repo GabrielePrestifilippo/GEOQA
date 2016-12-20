@@ -34,7 +34,7 @@ public class GreetingController {
 	) throws IOException {
 
 		try {
-
+/*
 			String directory = "./Dati/";
 			String filepath = Paths.get(directory, "OSM00.car").toString();
 			String filepath1 = Paths.get(directory, "DBT00.car").toString();
@@ -56,6 +56,7 @@ public class GreetingController {
 			BufferedOutputStream stream3 = new BufferedOutputStream(new FileOutputStream(new File(filepath3)));
 			stream3.write(points2.getBytes());
 			stream3.close();
+			*/
 		}
 
 		catch (Exception e) {
@@ -66,12 +67,26 @@ public class GreetingController {
 
 		test.setParams(angolo, sigma, distanza);
 
-		test.setSource("Dati/OSM00.car");
-		test.setTarget("Dati/DBT00.car");
+		//test.setSource("Dati/OSM00.car");
+		//test.setTarget("Dati/DBT00.car");
+		test.setSource(layer1.getBytes(),points1.getBytes());
+		test.setTarget(layer2.getBytes(),points2.getBytes());
 	
 		String result = test.execute();
 		System.out.println("Res ready");
 		return ResponseEntity.ok().body(result);
 	}
+
+
+
+@ResponseBody
+@CrossOrigin
+@RequestMapping(value = "get", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+public ResponseEntity<String> get(
+
+) throws IOException {
+	
+	return ResponseEntity.ok().body("hello");
+}
 
 }

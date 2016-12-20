@@ -11,9 +11,11 @@
 
     <link rel="stylesheet" href="leaflet/leaflet.css"/>
     <link rel="stylesheet" href="css/font-awesome.min.css"/>
-    <link rel="stylesheet" href="css/bootstrap.min.css/">
-    <link rel="stylesheet" href="css/bootstrap-switch.min.css/">
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/bootstrap-switch.min.css">
     <link rel="stylesheet" href="css/bootstrap-select.min.css">
+    <link rel="stylesheet" href="css/MarkerCluster.css">
+    <link rel="stylesheet" href="css/MarkerCluster.Default.css">
     <link rel="stylesheet" href="css/main.css">
 
 
@@ -161,19 +163,41 @@
     <div id="resultMap">
 
     </div>
+
+
+
     <div id="resultData" class="row">
+
         <div class="input-group">
-            <span class="input-group-addon">Precision</span>
-            <input id="precision" type="number" disabled class="form-control">
+            <span class="input-group-addon">Mean Delta X</span>
+            <input id="mediaDeltaX" type="text" disabled class="form-control">
         </div>
         <div class="input-group">
-            <span class="input-group-addon">Standard Deviation</span>
-            <input id="stdev" type="text" disabled class="form-control">
+            <span class="input-group-addon">Delta X Variance</span>
+            <input id="varianzaDeltaX" type="text" disabled class="form-control">
         </div>
         <div class="input-group">
-            <span class="input-group-addon">Mean Error</span>
-            <input id="meanerror" type="text" disabled class="form-control">
+            <span class="input-group-addon">Mean Delta Y</span>
+            <input id="mediaDeltaY" type="text" disabled class="form-control">
         </div>
+        <div class="input-group">
+            <span class="input-group-addon">Mean Distances</span>
+            <input id="mediaDistanze" type="text" disabled class="form-control">
+        </div>
+        <div class="input-group">
+            <span class="input-group-addon">Distances Variance</span>
+            <input id="varianzaDistanze" type="text" disabled class="form-control">
+        </div>
+        <div class="input-group">
+            <span class="input-group-addon">Min Distance</span>
+            <input id="distanzaMinima" type="text" disabled class="form-control">
+        </div>
+        <div class="input-group">
+            <span class="input-group-addon">Max Distance</span>
+            <input id="distanzaMassima" type="text" disabled class="form-control">
+        </div>
+
+
     </div>
 
 </div>

@@ -1,15 +1,16 @@
 define([
     'jquery',
-    'js/lib/bootstrap.min',
+    'bootstrap',
     'osmtogeojson',
     'js/GeoHelper',
     'leaflet-vector',
     'leaflet/leaflet-pip.js',
     'js/proj4',
+    'leaflet-marker',
     'bootstrap-select',
     'leaflet-areaselect',
     'leaflet-MapSync',
-    'bootstrap-switch',
+    'bootstrapSwitch',
     'js/transformation',
     'leaflet'
 
@@ -18,40 +19,52 @@ define([
         this.markers1 = {
             markers: [],
             lMarkers: [],
+            cluster: L.markerClusterGroup({
+                disableClusteringAtZoom: 18
+            }),
             missing: []
         };
         this.markers2 = {
             markers: [],
             lMarkers: [],
+            cluster: L.markerClusterGroup({
+                disableClusteringAtZoom: 18
+            }),
             missing: []
         };
+
         this.addLeafletMaps();
+        this.map1.addLayer(this.markers1.cluster);
+        this.map2.addLayer(this.markers2.cluster);
         this.helper = new GeoHelper(this);
         this.UI = UI;
         this.projection = "+proj=utm +zone=32 +ellps=WGS84 +datum=WGS84 +units=m +no_defs";
         var self = this;
 
         //Temporary maps
-        setTimeout(function () {
-            $.ajax({
-                // url: 'osm.geojson',
-                // url: 'map2.geojson',
-                type: 'POST',
-                success: function (data) {
-                    //self.addJson(self.map1, data);
-                }
-            });
+        /*
+         setTimeout(function () {
+         $.ajax({
+         // url: 'osm.geojson',
+         url: 'map2.geojson',
+         type: 'POST',
+         success: function (data) {
+         self.addJson(self.map1, data);
+         }
+         });
 
-            $.ajax({
-                // url: 'dbtr.geojson',
-                // url: 'map1.geojson',
-                type: 'POST',
-                success: function (data) {
-                   // self.addJson(self.map2, data);
-                }
-            });
+         $.ajax({
+         // url: 'dbtr.geojson',
+         url: 'map1.geojson',
+         type: 'POST',
+         success: function (data) {
+         self.addJson(self.map2, data);
+         }
+         });
 
-        }, 2000)
+         }, 2000)
+         */
+
     };
     GEOQA.prototype.addLeafletMaps = function () {
         var omsMap1 = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'});
@@ -179,7 +192,7 @@ define([
 
         geompoints.forEach(function (point) {
 
-            if (point.indexOf("A") !== -1) {
+            if (point.indexOf("A") !== -1 || point.indexOf("L") !== -1) {
                 currentFeature = JSON.parse(JSON.stringify(f));
                 g.features.push(currentFeature);
             } else {
@@ -215,7 +228,9 @@ define([
         formData.append('sigma', "3");
         formData.append('distanza', "1");
         $.ajax({
-            url: "http://localhost:8080/send",
+            // url: "http://localhost:8081/GEOQA-0.1.0/send",
+            //http://localhost:8080/send",
+            url: "http://131.175.143.84/geo/send",
             type: "POST",
             data: formData,
             enctype: 'multipart/form-data',
@@ -230,43 +245,9 @@ define([
             error: function (e) {
                 console.log(e);
             }
+
         });
 
-        /*
-         $.ajax({
-         url: 'http://localhost:8080/send',
-         data: JSON.stringify(dataToSend),
-         processData: false,
-         contentType: false,
-         type: 'POST',
-         success: function (data) {
-         console.log(data);
-         // data = osmtogeojson(data);
-         //numberMap == "1" ? numberMap = self.map1 : numberMap = self.map2;
-         //self.addJson(numberMap, data);
-         },
-         error: function (e) {
-         console.log("error: " + JSON.stringify(e));
-         }
-         });
-         */
-        var self = this;
-
-        //noinspection JSUnresolvedFunction
-        var promise = new Promise(function (resolve) {
-            $.ajax({
-                url: 'result.json',
-                success: function (data) {
-                    var resultParam = [0.78, 0.32, 0.11];
-                    //  resolve([data, resultParam]);
-                }
-            });
-        });
-        promise.then(function (res) {
-            var data = res[0];
-            var resultParam = res[1];
-            self.resultMap(data, resultParam);
-        });
     };
     GEOQA.prototype.resultMap = function (data, resultParam) {
 
@@ -274,7 +255,7 @@ define([
         var resultMap = L.map('resultMap', {center: [45.82789, 9.07617], zoom: 5, minZoom: 4});
         resultMap.addLayer(omsMap3);
 
-        L.vectorGrid.slicer(data, {
+        var res = L.vectorGrid.slicer(data, {
             rendererFactory: L.svg.tile,
             vectorTileLayerStyles: {
                 sliced: function (properties, zoom) {
@@ -290,19 +271,66 @@ define([
             getFeatureId: function (f) {
             }
         }).addTo(resultMap);
+        var map1 = L.vectorGrid.slicer(this.jsonMap1, {
+            rendererFactory: L.svg.tile,
+            vectorTileLayerStyles: {
+                sliced: function (properties, zoom) {
+                    return {
+                        fillColor: '#66ff66',
+                        fillOpacity: 0.85,
+                        stroke: false,
+                        fill: true
+                    }
+                }
+            },
+            interactive: true,
+            getFeatureId: function (f) {
+            }
+        });
+        var map2 = L.vectorGrid.slicer(this.jsonMap2, {
+            rendererFactory: L.svg.tile,
+            vectorTileLayerStyles: {
+                sliced: function (properties, zoom) {
+                    return {
+                        fillColor: '#ff9966',
+                        fillOpacity: 0.85,
+                        stroke: false,
+                        fill: true
+                    }
+                }
+            },
+            interactive: true,
+            getFeatureId: function (f) {
+            }
+        });
+        var base = {
+            "Base Map": omsMap3
+        };
+        var external = {};
 
+        var over = new L.control.layers(base, external).addTo(resultMap);
+
+        over.addOverlay(map1, "Map 1");
+        over.addOverlay(map2, "Map 2");
+        over.addOverlay(res, "Result map");
 
         $("#map1, #map2").hide();
         $("#resultMap,#resultData").show();
+        $("#mapAfterControls").hide();
         var lat = data.features[0].geometry.coordinates[0][0][1] ? data.features[0].geometry.coordinates[0][0][1] : data.features[0].geometry.coordinates[0][1];
         var lng = data.features[0].geometry.coordinates[0][0][0] ? data.features[0].geometry.coordinates[0][0][0] : data.features[0].geometry.coordinates[0][0];
         resultMap.invalidateSize();
         resultMap.setView(new L.LatLng(lat, lng), 16);
         $("#loading").hide();
 
-        $("#precision").val(resultParam[0]);
-        $("#stdev").val(resultParam[1]);
-        $("#meanerror").val(resultParam[2]);
+
+        $("#mediaDeltaX").val(String(resultParam[1]));
+        $("#varianzaDeltaX").val(String(resultParam[2]));
+        $("#mediaDeltaY").val(String(resultParam[3]));
+        $("#mediaDistanze").val(String(resultParam[4]));
+        $("#varianzaDistanze").val(String(resultParam[5]));
+        $("#distanzaMinima").val(String(resultParam[6]));
+        $("#distanzaMassima").val(String(resultParam[7]));
 
 
     };
@@ -335,12 +363,13 @@ define([
         }).addTo(map);
 
 
-        var x = vectorGrid;
+
 
         var temp = L.geoJson(data);
 
         if (map._container.id == "map1") {
             this.jsonMap1 = data;
+            this.lMap1=vectorGrid;
             this.jsonMap1.prop = this.UI.getProp(data);
             var res = proj4('WGS84', self.projection, [temp.getBounds()._southWest.lng, temp.getBounds()._southWest.lat]);
             var res1 = proj4('WGS84', self.projection, [temp.getBounds()._northEast.lng, temp.getBounds()._northEast.lat]);
@@ -348,6 +377,7 @@ define([
             this.UI.addPropToMenu(1, this.jsonMap1.prop);
         } else {
             this.jsonMap2 = data;
+            this.lMap2=vectorGrid;
             this.jsonMap2.prop = this.UI.getProp(data);
             var res = proj4('WGS84', self.projection, [temp.getBounds()._southWest.lng, temp.getBounds()._southWest.lat]);
             var res1 = proj4('WGS84', self.projection, [temp.getBounds()._northEast.lng, temp.getBounds()._northEast.lat]);
@@ -404,7 +434,7 @@ define([
             }
         });
 
-        map.over.addOverlay(x, "Vector layer" + map.over._layers.length);
+        map.over.addOverlay(vectorGrid, "Vector layer" + map.over._layers.length);
 
         map.fitBounds(temp.getBounds());
         map.setZoom(14);

@@ -155,6 +155,14 @@
                 });
             }, this);
 
+            originalMap.on('dragend', function () {
+                var t= this.t;
+                originalMap._syncMaps.forEach(function (toSync) {
+                    var newPoint=t.transform([originalMap.getCenter().lat,originalMap.getCenter().lng]);
+                    var newCenter=L.latLng(newPoint[0],newPoint[1]);
+                    toSync.setView(newCenter, originalMap.getZoom(), NO_ANIMATION);
+                });
+            }, this);
             originalMap.dragging._draggable._updatePosition = function () {
                 L.Draggable.prototype._updatePosition.call(this);
                 var self = this;

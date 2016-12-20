@@ -1,9 +1,12 @@
 package server.software;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import libSpline.*;
 import libGeometry.*;
@@ -153,23 +156,25 @@ public class SoftwareMain {
         return "e;f;a;b;c;d;punti;varianza\r\n" + risultato.stampa();
     }
 
-    public Mappa leggiMappa(String nomeFile) {
-        String nomeFileOmologhi = nomeFile.substring(0, nomeFile.length() - 4) + ".omo";
-        Mappa map = Utility.leggi(nomeFile);
-        Utility.leggiOmologhi(nomeFileOmologhi, map);
+   // public Mappa leggiMappa(String nomeFile) {
+    public Mappa leggiMappa(byte[] layer, byte[] omologhi) {
+       // String nomeFileOmologhi = nomeFile.substring(0, nomeFile.length() - 4) + ".omo";
+        Mappa map = Utility.leggi(layer);
+        Utility.leggiOmologhi(omologhi, map);
         System.out.println("Numero entita: " + map.getNumeroEntita());
         System.out.println("Numero punti omologhi: " + map.getNumeroPuntiOmologhi());
         return map;
     }
     
     
-    public void setSource(String source){
-    	
-    	this.source=this.leggiMappa(source);
+  //  public void setSource(String source){
+    public void setSource(byte[] source, byte[] omologhi){
+    	this.source=this.leggiMappa(source, omologhi);
     }
     
-    public void setTarget(String target){
-    	this.target=this.leggiMappa(target);
+    //public void setTarget(String target){
+    	public void setTarget(byte[] target, byte[] omologhi){
+    	this.target=this.leggiMappa(target, omologhi);
     }
    
     public void setParams(double angolo, double sigma, double distanza){
@@ -185,10 +190,6 @@ public class SoftwareMain {
          Mappa source = this.source; 
          Mappa target = this.target; 
          
-         
-         //set omologhi source
-         //set omologhi target
-         
          System.out.println(new Statistiche(source.getPuntiOmologhi(), target.getPuntiOmologhi()).stampa());
 
          int numeroIterazioni = 5;
@@ -200,13 +201,12 @@ public class SoftwareMain {
          String outputTrasfAffine = test.stimaAffine(source, target, numeroIterazioni, angolo, sigma, distanzaMax);
          System.out.println(outputTrasfAffine);
          
-         
-         //System.out.println("Numero punti omologhi 1: " + source.getNumeroPuntiOmologhi());
-         //System.out.println("Numero punti omologhi 2: " + target.getNumeroPuntiOmologhi());
          System.out.println(new Statistiche(source.getPuntiOmologhi(), target.getPuntiOmologhi()).stampa());
-         Utility.salva("./Risultati/RisultatoAffine.car", source);
-         Utility.salvaOmologhi("./Risultati/RisultatoAffine.omo", source);
+         byte[] resultMap=Utility.salva(source);
+         byte[] resultPoints=Utility.salvaOmologhi(source);
+        // Utility.salvaOmologhi("./Risultati/RisultatoAffine.omo", source);
 
+         
          int filtraggio = 2;
          numeroIterazioni = 4;
          String outputTrasfSpline = test.stimaSpline(source, target, filtraggio, numeroIterazioni);
@@ -221,10 +221,15 @@ public class SoftwareMain {
          response.setStatistics(statistiche);
 
          
-         String result="";
-         BufferedReader br = new BufferedReader(new FileReader("./Risultati/RisultatoAffine.car"));
+         String map="";
+       //  BufferedReader br = new BufferedReader(new FileReader("./Risultati/RisultatoAffine.car"));
+        // try {
+         InputStream is = null;
+     	is = new ByteArrayInputStream(resultMap);
+         BufferedReader br= new BufferedReader(new InputStreamReader(is));
          try {
-             StringBuilder sb = new StringBuilder();
+         
+         StringBuilder sb = new StringBuilder();
              String line = br.readLine();
 
              while (line != null) {
@@ -232,15 +237,19 @@ public class SoftwareMain {
                  sb.append(System.lineSeparator());
                  line = br.readLine();
              }
-            result = sb.toString();
+            map = sb.toString();
          } finally {
              br.close();
          }
          
-         String resultPoints="";
-         br = new BufferedReader(new FileReader("./Risultati/RisultatoAffine.omo"));
-         try {
-             StringBuilder sb = new StringBuilder();
+         String points="";
+        // br = new BufferedReader(new FileReader("./Risultati/RisultatoAffine.omo"));
+         //try {
+        is = null;
+      	is = new ByteArrayInputStream(resultMap);
+        br= new BufferedReader(new InputStreamReader(is)); 
+         try{
+         StringBuilder sb = new StringBuilder();
              String line = br.readLine();
 
              while (line != null) {
@@ -248,14 +257,14 @@ public class SoftwareMain {
                  sb.append(System.lineSeparator());
                  line = br.readLine();
              }
-             resultPoints = sb.toString();
+             points = sb.toString();
          } finally {
              br.close();
          }
   
          
-         response.setPoints(resultPoints);
-         response.setResultMap(result);
+         response.setPoints(points);
+         response.setResultMap(map);
          Gson gson = new Gson();
          
          String toSend=gson.toJson(response);
@@ -263,7 +272,7 @@ public class SoftwareMain {
          return toSend;
     }
     
-    public static void main(String[] args) throws IOException {
+    /*public static void main(String[] args) throws IOException {
         SoftwareMain test = new SoftwareMain();
         Mappa source = test.leggiMappa("./Dati/OSM00.car");
         Mappa target = test.leggiMappa("./Dati/DBT00.car");
@@ -293,4 +302,5 @@ public class SoftwareMain {
    
         
     }
+    */
 }

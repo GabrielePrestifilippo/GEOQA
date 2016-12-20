@@ -1,12 +1,16 @@
 package libGeometry;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.*;
 import java.util.*;
 
 public class Utility {
 
-    public static Mappa leggi(String fileName) {
+   // public static Mappa leggi(String fileName) {
+	public static Mappa leggi(byte[] layer) {
         BufferedReader bufferedReader;
         String linea;
         StringTokenizer st;
@@ -14,8 +18,11 @@ public class Utility {
         int num_Token;
         Mappa mappa = new Mappa();
         Entita entita = null;
+    	
+    	InputStream is = null;
         try {
-            bufferedReader = new BufferedReader(new FileReader(fileName));
+        	 is = new ByteArrayInputStream(layer);
+        	bufferedReader = new BufferedReader(new InputStreamReader(is));
             try {
                 while ((linea = bufferedReader.readLine()) != null) {
                     try {
@@ -64,14 +71,17 @@ public class Utility {
         return mappa;
     }
 
-    public static boolean leggiOmologhi(String fileName, Mappa mappa) {
+    //public static boolean leggiOmologhi(String fileName, Mappa mappa) {
+       public static boolean leggiOmologhi(byte[] omologhi, Mappa mappa) {
         BufferedReader bufferedReader;
         StringTokenizer st;
         String linea;
         boolean letturaCorretta = true;
         boolean inserito = true;
+        InputStream is = null;
         try {
-            bufferedReader = new BufferedReader(new FileReader(fileName));
+        	 is = new ByteArrayInputStream(omologhi);
+        	bufferedReader = new BufferedReader(new InputStreamReader(is));
             try {
                 while (((linea = bufferedReader.readLine()) != null) && inserito) {
                     st = new StringTokenizer(linea, " ", false);
@@ -99,7 +109,10 @@ public class Utility {
         return letturaCorretta;
     }
 
-    public static boolean salva(String fileName, Mappa mappa) {
+
+       
+   // public static boolean salva(String fileName, Mappa mappa) throws IOException {
+       public static byte[] salva(Mappa mappa) throws IOException {
         DecimalFormat decimalFormat = new DecimalFormat();
         decimalFormat.setGroupingUsed(false);
         DecimalFormatSymbols sy = new DecimalFormatSymbols();
@@ -107,13 +120,19 @@ public class Utility {
         decimalFormat.setDecimalFormatSymbols(sy);
         decimalFormat.setMaximumFractionDigits(3);
         decimalFormat.setMinimumFractionDigits(3);
+        
+        
+        File temp = File.createTempFile("tempfile", ".tmp");
+        String pathTemp = temp.getAbsolutePath();
+        
         boolean scritturaCorretta = true;
         if (mappa.getNumeroEntita() != 0) {
             BufferedWriter bufferedWriter;
             String riga;
             String tipo;
             try {
-                bufferedWriter = new BufferedWriter(new FileWriter(fileName));
+                bufferedWriter = new BufferedWriter(new FileWriter(temp));
+                
                 try {
                     riga = decimalFormat.format(mappa.getBoundingBox().xLowLeft) + " "
                             + decimalFormat.format(mappa.getBoundingBox().yLowLeft) + " "
@@ -152,14 +171,20 @@ public class Utility {
                 scritturaCorretta = false;
             }
         }
-        return scritturaCorretta;
+        Path path = Paths.get(pathTemp);
+        return Files.readAllBytes(path);
     }
 
-    public static boolean salvaOmologhi(String fileName, Mappa mappa) {
-        BufferedWriter bufferedWriter;
+   // public static boolean salvaOmologhi(String fileName, Mappa mappa) {
+       public static byte[] salvaOmologhi(Mappa mappa) throws IOException {
+       BufferedWriter bufferedWriter;
+       
+       File temp = File.createTempFile("tempfile", ".tmp");
+       String pathTemp = temp.getAbsolutePath();
+       
         boolean scritturaCorretta = true;
         try {
-            bufferedWriter = new BufferedWriter(new FileWriter(fileName));
+            bufferedWriter = new BufferedWriter(new FileWriter(temp));
 
             try {
                 String riga;
@@ -181,6 +206,7 @@ public class Utility {
             System.out.println(iOException.toString());
             scritturaCorretta = false;
         }
-        return scritturaCorretta;
+        Path path = Paths.get(pathTemp);
+        return Files.readAllBytes(path);
     }
 }

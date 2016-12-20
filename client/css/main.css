@@ -184,7 +184,7 @@ button#addAssociation {
     z-index: 999;
     line-height: 14px;
     padding: 10px;
-    right: 55px;
+    right: 65px;
     font-size: 14px;
     margin-top: 5px;
     float: right;
@@ -334,4 +334,8 @@ li {
     float: left;
     position: relative;
     padding-left: 10px;
+}
+.modal-footer {
+    background-color: #efefef;
+    border-radius: 5px;
 }
