@@ -1,14 +1,14 @@
 package server;
 
 
-public class Greeting {
+public class Temporaryclass {
 
     private final long id;
     private final String content;
     private final int sample;
     private String detail;
 
-    public Greeting(long id, String content) {
+    public Temporaryclass(long id, String content) {
         this.id = id;
         this.content = content;
         this.sample=3;

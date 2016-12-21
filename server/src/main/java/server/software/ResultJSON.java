@@ -5,6 +5,7 @@ public class ResultJSON {
 	private String statistics;
 	private String resultMap;
 	private String resultPoints;
+	private String resultPoints1;
 	
 	public ResultJSON(){
 
@@ -32,6 +33,10 @@ public class ResultJSON {
 
 	public void setPoints(String ds) {
 		this.resultPoints = ds;
+	}
+	
+	public void setPoints1(String ds) {
+		this.resultPoints1 = ds;
 	}
 
 }

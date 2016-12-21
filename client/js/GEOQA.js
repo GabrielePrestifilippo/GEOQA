@@ -42,33 +42,33 @@ define([
         var self = this;
 
         //Temporary maps
-        /*
-         setTimeout(function () {
-         $.ajax({
-         // url: 'osm.geojson',
-         url: 'map2.geojson',
-         type: 'POST',
-         success: function (data) {
-         self.addJson(self.map1, data);
-         }
-         });
 
-         $.ajax({
-         // url: 'dbtr.geojson',
-         url: 'map1.geojson',
-         type: 'POST',
-         success: function (data) {
-         self.addJson(self.map2, data);
-         }
-         });
+        setTimeout(function () {
+            $.ajax({
+                // url: 'osm.geojson',
+                url: 'map2.geojson',
+                type: 'POST',
+                success: function (data) {
+                    self.addJson(self.map1, data);
+                }
+            });
 
-         }, 2000)
-         */
+            $.ajax({
+                // url: 'dbtr.geojson',
+                url: 'map1.geojson',
+                type: 'POST',
+                success: function (data) {
+                    self.addJson(self.map2, data);
+                }
+            });
+
+        }, 2000)
+
 
     };
     GEOQA.prototype.addLeafletMaps = function () {
-        var omsMap1 = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'});
-        var omsMap2 = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'});
+        var omsMap1 = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {maxZoom: 25, maxNativeZoom: 18, attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'});
+        var omsMap2 = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {maxZoom: 25, maxNativeZoom: 18, attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'});
         this.map1 = L.map('map1', {center: [45.82789, 9.07617], zoom: 12, minZoom: 2});
 
         var base = {
@@ -100,38 +100,53 @@ define([
         });
     };
     GEOQA.prototype.getHomologus = function (/*pairAttribute, features*/) {
-
-
         var self = this;
-        /*
-         var pairs = [this.markers1.markers, this.markers2.markers];
-         var toSend = {
-         pairs: pairs,
-         attributes: pairAttribute,
-         features: features
-         };
-         */
+        var l1 = this.toCar(this.jsonMap1, "OSM");
+        var l2 = this.toCar(this.jsonMap2, "DBT");
+        var p1 = this.toOmo(this.markers1.markers);
+        var p2 = this.toOmo(this.markers2.markers);
+        var formData = new FormData();
+        formData.append('layer1', new File([new Blob([l1])], "OSM00"));
+        formData.append('layer2', new File([new Blob([l2])], "DBT00"));
+        formData.append('points1', new File([new Blob([p1])], "OSM00_OMO"));
+        formData.append('points2', new File([new Blob([p2])], "DBT00_OMO"));
+        formData.append('angolo', "10");
+        formData.append('sigma', "3");
+        formData.append('distanza', "1");
+
         var promise = new Promise(function (resolve) {
+
             $.ajax({
-                url: 'array.js',
-                success: function (data) {
-                    $("#loading").hide();
-                    resolve(JSON.parse(data));
+                url: "http://localhost:8080/getHomologus",
+                type: "POST",
+                data: formData,
+                enctype: 'multipart/form-data',
+                processData: false,
+                contentType: false,
+                cache: false,
+                success: function (res) {
+                    resolve([res.resultPoints,res.resultPoints1]);
+                },
+                error: function (e) {
+                    console.log(e);
                 }
+
             });
         });
+
         promise.then(function (res) {
             self.helper.cleanAllMarkers();
-
-            var marker1 = res[0];
-            var marker2 = res[1];
+            var marker1 = self.convertPoints(res[0]);
+            var marker2 = self.convertPoints(res[1]);
             var x;
             for (x = 0; x < marker1.length; x++) {
-                self.helper.insertMarker(self.map1, marker1[x][0], marker1[x][1], (x + 1), self.markers1, "map1");
+                self.helper.insertMarker(self.map1, marker1[x][1], marker1[x][0], (x + 1), self.markers1, "map1");
             }
             for (x = 0; x < marker2.length; x++) {
-                self.helper.insertMarker(self.map2, marker2[x][0], marker2[x][1], (x + 1), self.markers2, "map2");
+                self.helper.insertMarker(self.map2, marker2[x][1], marker2[x][0], (x + 1), self.markers2, "map2");
             }
+            $("#loading").hide();
+
         });
 
     };
@@ -206,9 +221,25 @@ define([
 
         return g;
     };
-    GEOQA.prototype.sendData = function (/*parameters*/) {
 
+    GEOQA.prototype.convertPoints = function (points) {
+        var newPoints = [];
+        var self = this;
+        points = points.split("\n");
+        points.forEach(function (p) {
+            var [lat, lng] = p.split(" ");
+            if (lat && lng) {
+                var res = proj4(self.projection, 'WGS84', [Number(lat), Number(lng)]);
+                newPoints.push(res);
+            }
+        });
 
+        return newPoints;
+    };
+
+    GEOQA.prototype.sendData = function (parameters) {
+
+        var [angleParam, sigmaParam, distanceParam, iterationsParam]=parameters;
         var self = this;
 
 
@@ -224,13 +255,13 @@ define([
         formData.append('layer2', new File([new Blob([l2])], "DBT00"));
         formData.append('points1', new File([new Blob([p1])], "OSM00_OMO"));
         formData.append('points2', new File([new Blob([p2])], "DBT00_OMO"));
-        formData.append('angolo', "10");
-        formData.append('sigma', "3");
-        formData.append('distanza', "1");
+        formData.append('angolo', angleParam);
+        formData.append('sigma', sigmaParam);
+        formData.append('distanza', distanceParam);
+        formData.append('iterazioni', iterationsParam);
+
         $.ajax({
-            // url: "http://localhost:8081/GEOQA-0.1.0/send",
-            //http://localhost:8080/send",
-            url: "http://131.175.143.84/geo/send",
+            url: "http://localhost:8080/send",
             type: "POST",
             data: formData,
             enctype: 'multipart/form-data',
@@ -256,6 +287,7 @@ define([
         resultMap.addLayer(omsMap3);
 
         var res = L.vectorGrid.slicer(data, {
+
             rendererFactory: L.svg.tile,
             vectorTileLayerStyles: {
                 sliced: function (properties, zoom) {
@@ -344,6 +376,7 @@ define([
 
         var vectorGrid = L.vectorGrid.slicer(data, {
             rendererFactory: L.svg.tile,
+            maxZoom: 25, maxNativeZoom: 18,
             vectorTileLayerStyles: {
                 sliced: function (properties, zoom) {
                     return {
@@ -363,13 +396,11 @@ define([
         }).addTo(map);
 
 
-
-
         var temp = L.geoJson(data);
 
         if (map._container.id == "map1") {
             this.jsonMap1 = data;
-            this.lMap1=vectorGrid;
+            this.lMap1 = vectorGrid;
             this.jsonMap1.prop = this.UI.getProp(data);
             var res = proj4('WGS84', self.projection, [temp.getBounds()._southWest.lng, temp.getBounds()._southWest.lat]);
             var res1 = proj4('WGS84', self.projection, [temp.getBounds()._northEast.lng, temp.getBounds()._northEast.lat]);
@@ -377,7 +408,7 @@ define([
             this.UI.addPropToMenu(1, this.jsonMap1.prop);
         } else {
             this.jsonMap2 = data;
-            this.lMap2=vectorGrid;
+            this.lMap2 = vectorGrid;
             this.jsonMap2.prop = this.UI.getProp(data);
             var res = proj4('WGS84', self.projection, [temp.getBounds()._southWest.lng, temp.getBounds()._southWest.lat]);
             var res1 = proj4('WGS84', self.projection, [temp.getBounds()._northEast.lng, temp.getBounds()._northEast.lat]);

@@ -18,8 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 import server.software.*;
 
 @RestController
-public class GreetingController {
-
+public class PostController {
 	@ResponseBody
 	@CrossOrigin
 	@RequestMapping(value = "send", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -29,54 +28,38 @@ public class GreetingController {
 			@RequestParam("points1") MultipartFile points1, @RequestParam("points2") MultipartFile points2,
 			@RequestParam(value = "angolo", required = false) Double angolo,
 			@RequestParam(value = "sigma", required = false) Double sigma,
-			@RequestParam(value = "distanza", required = false) Double distanza
-
+			@RequestParam(value = "distanza", required = false) Double distanza,
+			@RequestParam(value = "iterazioni", required = false) Integer iterazioni
 	) throws IOException {
-
-		try {
-/*
-			String directory = "./Dati/";
-			String filepath = Paths.get(directory, "OSM00.car").toString();
-			String filepath1 = Paths.get(directory, "DBT00.car").toString();
-			String filepath2 = Paths.get(directory, "OSM00.omo").toString();
-			String filepath3 = Paths.get(directory, "DBT00.omo").toString();
-
-			BufferedOutputStream stream = new BufferedOutputStream(new FileOutputStream(new File(filepath)));
-			stream.write(layer1.getBytes());
-			stream.close();
-
-			BufferedOutputStream stream1 = new BufferedOutputStream(new FileOutputStream(new File(filepath1)));
-			stream1.write(layer2.getBytes());
-			stream1.close();
-
-			BufferedOutputStream stream2 = new BufferedOutputStream(new FileOutputStream(new File(filepath2)));
-			stream2.write(points1.getBytes());
-			stream2.close();
-
-			BufferedOutputStream stream3 = new BufferedOutputStream(new FileOutputStream(new File(filepath3)));
-			stream3.write(points2.getBytes());
-			stream3.close();
-			*/
-		}
-
-		catch (Exception e) {
-			System.out.println(e.getMessage());
-		}
-
 		SoftwareMain test = new SoftwareMain();
-
-		test.setParams(angolo, sigma, distanza);
-
-		//test.setSource("Dati/OSM00.car");
-		//test.setTarget("Dati/DBT00.car");
+		test.setParams(angolo, sigma, distanza, iterazioni);
 		test.setSource(layer1.getBytes(),points1.getBytes());
 		test.setTarget(layer2.getBytes(),points2.getBytes());
-	
 		String result = test.execute();
 		System.out.println("Res ready");
 		return ResponseEntity.ok().body(result);
 	}
 
+	@ResponseBody
+	@CrossOrigin
+	@RequestMapping(value = "getHomologus", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<String> getHomologus(
+
+			@RequestParam("layer1") MultipartFile layer1, @RequestParam("layer2") MultipartFile layer2,
+			@RequestParam("points1") MultipartFile points1, @RequestParam("points2") MultipartFile points2,
+			@RequestParam(value = "angolo", required = false) Double angolo,
+			@RequestParam(value = "sigma", required = false) Double sigma,
+			@RequestParam(value = "distanza", required = false) Double distanza,
+			@RequestParam(value = "iterazioni", required = false) Integer iterazioni
+	) throws IOException {
+		SoftwareMain test = new SoftwareMain();
+		test.setParams(angolo, sigma, distanza, iterazioni);
+		test.setSource(layer1.getBytes(),points1.getBytes());
+		test.setTarget(layer2.getBytes(),points2.getBytes());
+		String result = test.getHomologus();
+		System.out.println("Res ready");
+		return ResponseEntity.ok().body(result);
+	}
 
 
 @ResponseBody

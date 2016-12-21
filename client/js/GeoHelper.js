@@ -6,6 +6,9 @@ define(['js/lib/bootbox.min'], function (bootbox) {
     GeoHelper.prototype.cleanAllMarkers = function () {
         var self = this.app;
         var i;
+
+        $("#m1List").html("");
+        $("#m2List").html("");
         for (i = 0; i < self.markers1.lMarkers.length; i++) {
             var removed = self.map1.removeLayer(self.markers1.lMarkers[i]);
             self.markers1.cluster.removeLayer(removed);
@@ -19,11 +22,22 @@ define(['js/lib/bootbox.min'], function (bootbox) {
         self.markers1.markers = [];
         self.markers1.lMarkers = [];
         self.markers1.missing = [];
+        self.map1.removeLayer(self.markers1.cluster);
+        self.markers1.cluster= L.markerClusterGroup({
+            disableClusteringAtZoom: 18
+        });
+        self.map1.addLayer(self.markers1.cluster);
 
 
         self.markers2.markers = [];
         self.markers2.lMarkers = [];
         self.markers2.missing = [];
+        self.map2.removeLayer(self.markers2.cluster);
+        self.markers2.cluster= L.markerClusterGroup({
+            disableClusteringAtZoom: 18
+        });
+        self.map2.addLayer(self.markers2.cluster);
+
 
 
     };
@@ -161,8 +175,6 @@ define(['js/lib/bootbox.min'], function (bootbox) {
     };
     GeoHelper.prototype.insertMarker = function (map, lat, lng, markerNumber, mainMarkers, mapNumber) {
         var self = this;
-
-
         var m1 = new L.marker([lat, lng], {
                 icon: new L.DivIcon({
                     className: "number-icon",
@@ -176,8 +188,7 @@ define(['js/lib/bootbox.min'], function (bootbox) {
         mainMarkers.cluster.addLayer(m1);
         m1.on("popupopen", onPopupOpen);
         m1.indexMarker = Number(markerNumber + 1);
-        var removed = mainMarkers.lMarkers.splice(markerNumber, 0, m1);
-        //mainMarkers.cluster.removeLayer(removed[0]);
+        var inserted = mainMarkers.lMarkers.splice(markerNumber, 0, m1);
         mainMarkers.markers.splice(markerNumber, 0, [lat, lng]);
         this.addMarkerToInterface(m1, markerNumber, mapNumber);
         function onPopupOpen() {

@@ -20,17 +20,9 @@ public class SoftwareMain {
 	private double angolo;
 	private double sigma;
 	private double distanza;
+	private int iterazioni;
 
 	public SoftwareMain() {
-		//fake data
-		//this.source=leggiMappa("./Dati/DBT.car");
-		//this.target=leggiMappa("./Dati/OSM.car");
-		
-		
-		//this.angolo=10;
-		//this.sigma=3;
-		//this.distanza=1;
-		
     }
 
     private String stimaSpline(Mappa source, Mappa target, int filtro, int numeroIterazioni) {
@@ -156,9 +148,7 @@ public class SoftwareMain {
         return "e;f;a;b;c;d;punti;varianza\r\n" + risultato.stampa();
     }
 
-   // public Mappa leggiMappa(String nomeFile) {
     public Mappa leggiMappa(byte[] layer, byte[] omologhi) {
-       // String nomeFileOmologhi = nomeFile.substring(0, nomeFile.length() - 4) + ".omo";
         Mappa map = Utility.leggi(layer);
         Utility.leggiOmologhi(omologhi, map);
         System.out.println("Numero entita: " + map.getNumeroEntita());
@@ -167,29 +157,100 @@ public class SoftwareMain {
     }
     
     
-  //  public void setSource(String source){
     public void setSource(byte[] source, byte[] omologhi){
     	this.source=this.leggiMappa(source, omologhi);
     }
-    
-    //public void setTarget(String target){
+
     	public void setTarget(byte[] target, byte[] omologhi){
     	this.target=this.leggiMappa(target, omologhi);
     }
    
-    public void setParams(double angolo, double sigma, double distanza){
+    public void setParams(double angolo, double sigma, double distanza, int iterazioni){
     	this.angolo=angolo;
     	this.sigma=sigma;
     	this.distanza=distanza;
+    	this.iterazioni=iterazioni;
     }
+    
+    public String getHomologus() throws IOException{
+    	
+   	 	//SoftwareMain test = new SoftwareMain();
+   	 
+        Mappa source = this.source; 
+        Mappa target = this.target; 
+        
+        System.out.println(new Statistiche(source.getPuntiOmologhi(), target.getPuntiOmologhi()).stampa());
+
+        int numeroIterazioni = this.iterazioni;
+        double angolo = this.angolo * Math.PI / 180;
+        double sigma = this.sigma;
+        double distanzaMax = this.distanza; 
+        
+        
+        String outputTrasfAffine = this.stimaAffine(source, target, numeroIterazioni, angolo, sigma, distanzaMax);
+        System.out.println(outputTrasfAffine);
+        
+        System.out.println(new Statistiche(source.getPuntiOmologhi(), target.getPuntiOmologhi()).stampa());
+        //byte[] resultMap=Utility.salva(source);
+        byte[] resultPoints=Utility.salvaOmologhi(source);
+        byte[] resultPoints1=Utility.salvaOmologhi(target);
+     
+     
+        ResultJSON response=new ResultJSON();
+       
+        String points="";
+        InputStream is = null;
+        is = new ByteArrayInputStream(resultPoints);
+        BufferedReader br= new BufferedReader(new InputStreamReader(is));
+        try{
+        StringBuilder sb = new StringBuilder();
+            String line = br.readLine();
+
+            while (line != null) {
+                sb.append(line);
+                sb.append(System.lineSeparator());
+                line = br.readLine();
+            }
+            points = sb.toString();
+        } finally {
+            br.close();
+        }
+        
+        String points1="";
+        is = null;
+        is = new ByteArrayInputStream(resultPoints1);
+       br= new BufferedReader(new InputStreamReader(is));
+        try{
+        StringBuilder sb = new StringBuilder();
+            String line = br.readLine();
+
+            while (line != null) {
+                sb.append(line);
+                sb.append(System.lineSeparator());
+                line = br.readLine();
+            }
+            points1 = sb.toString();
+        } finally {
+            br.close();
+        }
+ 
+        
+        response.setPoints(points);
+        response.setPoints1(points1);
+   
+        Gson gson = new Gson();
+        
+        String toSend=gson.toJson(response);
+        
+        return toSend;
+   }
     
     public String execute() throws IOException{
     	
-    	 SoftwareMain test = new SoftwareMain();
-    	 
          Mappa source = this.source; 
          Mappa target = this.target; 
          
+        // TabellaRelazioneLivelli tabella= new TabellaRelazioneLivelli();
          System.out.println(new Statistiche(source.getPuntiOmologhi(), target.getPuntiOmologhi()).stampa());
 
          int numeroIterazioni = 5;
@@ -198,23 +259,16 @@ public class SoftwareMain {
          double distanzaMax = this.distanza; 
          
          
-         String outputTrasfAffine = test.stimaAffine(source, target, numeroIterazioni, angolo, sigma, distanzaMax);
+         String outputTrasfAffine = this.stimaAffine(source, target, numeroIterazioni, angolo, sigma, distanzaMax);
          System.out.println(outputTrasfAffine);
          
          System.out.println(new Statistiche(source.getPuntiOmologhi(), target.getPuntiOmologhi()).stampa());
          byte[] resultMap=Utility.salva(source);
-         byte[] resultPoints=Utility.salvaOmologhi(source);
-        // Utility.salvaOmologhi("./Risultati/RisultatoAffine.omo", source);
-
          
          int filtraggio = 2;
          numeroIterazioni = 4;
-         String outputTrasfSpline = test.stimaSpline(source, target, filtraggio, numeroIterazioni);
-         //System.out.println(outputTrasfSpline);
-        // return (new Statistiche(source.getPuntiOmologhi(), target.getPuntiOmologhi()).stampa());
-         //Utility.salva("./Risultati/RisultatoSpline.car", source);
-        // Utility.salvaOmologhi("./Risultati/risultatoSpline.omo", source);
-         
+         String outputTrasfSpline = this.stimaSpline(source, target, filtraggio, numeroIterazioni);
+
          ResultJSON response=new ResultJSON();
          
          String statistiche=new Statistiche(source.getPuntiOmologhi(), target.getPuntiOmologhi()).stampa();
@@ -222,8 +276,6 @@ public class SoftwareMain {
 
          
          String map="";
-       //  BufferedReader br = new BufferedReader(new FileReader("./Risultati/RisultatoAffine.car"));
-        // try {
          InputStream is = null;
      	is = new ByteArrayInputStream(resultMap);
          BufferedReader br= new BufferedReader(new InputStreamReader(is));
@@ -243,8 +295,6 @@ public class SoftwareMain {
          }
          
          String points="";
-        // br = new BufferedReader(new FileReader("./Risultati/RisultatoAffine.omo"));
-         //try {
         is = null;
       	is = new ByteArrayInputStream(resultMap);
         br= new BufferedReader(new InputStreamReader(is)); 
@@ -262,8 +312,7 @@ public class SoftwareMain {
              br.close();
          }
   
-         
-         response.setPoints(points);
+    
          response.setResultMap(map);
          Gson gson = new Gson();
          
