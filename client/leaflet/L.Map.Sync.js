@@ -4,7 +4,7 @@
 
 
 // UMD
-(function(factory) {
+(function (factory) {
     var L;
     if (typeof define === 'function' && define.amd) {
         // AMD
@@ -20,15 +20,15 @@
         }
         factory(window.L);
     }
-})(function(L) {
+})(function (L) {
 
     var NO_ANIMATION = {
         animate: false,
         reset: true
     };
-
+    var selfConstructor;
     L.Map = L.Map.extend({
-        sync: function (map, options, coord_sx, coord_dx) {
+        sync: function (map, options, coord_sx, coord_dx, transformation) {
             this._initSync();
             options = L.extend({
                 noInitialSync: false,
@@ -40,6 +40,8 @@
                     fillColor: '#fff'
                 }
             }, options);
+            this.transformation = transformation;
+
 
             // prevent double-syncing the map:
             if (this._syncMaps.indexOf(map) === -1) {
@@ -47,12 +49,16 @@
             }
 
             if (!options.noInitialSync) {
-                var t=Transformation;
-                this.t=t;
-                t.setPoints(coord_dx,coord_sx);
-                var newPoint=t.transform([this.getCenter().lat,this.getCenter().lng]);
-                var newCenter=L.latLng(newPoint[0],newPoint[1]);
-                map.setView(newCenter, this.getZoom(), NO_ANIMATION);
+                if (coord_dx.length >= 4 && coord_sx.length >= 4 && this.transformation) {
+                    var t = Transformation;
+                    this.t = t;
+                    t.setPoints(coord_dx, coord_sx);
+                    var newPoint = t.transform([this.getCenter().lat, this.getCenter().lng]);
+                    var newCenter = L.latLng(newPoint[0], newPoint[1]);
+                    map.setView(newCenter, this.getZoom(), NO_ANIMATION);
+                } else {
+                    map.setView([this.getCenter().lat, this.getCenter().lng], this.getZoom(), NO_ANIMATION);
+                }
             }
             if (options.syncCursor) {
                 map.cursor = L.circleMarker([0, 0], options.syncCursorMarkerOptions).addTo(map);
@@ -117,10 +123,14 @@
             L.extend(originalMap, {
                 setView: function (center, zoom, options, sync) {
                     if (!sync) {
-                        var self=this;
+                        var self = this;
                         originalMap._syncMaps.forEach(function (toSync) {
-                            var newPoint=self.t.transform([center.lat,center.lng]);
-                            var newCenter=L.latLng(newPoint[0],newPoint[1]);
+                            if (self.transformation) {
+                                var newPoint = self.t.transform([center.lat, center.lng]);
+                                var newCenter = L.latLng(newPoint[0], newPoint[1]);
+                            } else {
+                                var newCenter = [originalMap.getCenter().lat, originalMap.getCenter().lng];
+                            }
                             toSync.setView(newCenter, zoom, options, true);
                         });
                     }
@@ -147,31 +157,48 @@
             });
 
             originalMap.on('zoomend', function () {
-                var t= this.t;
+                var t = this.t;
+                var self = this;
                 originalMap._syncMaps.forEach(function (toSync) {
-                    var newPoint=t.transform([originalMap.getCenter().lat,originalMap.getCenter().lng]);
-                    var newCenter=L.latLng(newPoint[0],newPoint[1]);
+                    if (self.transformation) {
+                        var newPoint = t.transform([originalMap.getCenter().lat, originalMap.getCenter().lng]);
+                        var newCenter = L.latLng(newPoint[0], newPoint[1]);
+                    } else {
+                        var newCenter = [originalMap.getCenter().lat, originalMap.getCenter().lng];
+                    }
                     toSync.setView(newCenter, originalMap.getZoom(), NO_ANIMATION);
                 });
             }, this);
 
             originalMap.on('dragend', function () {
-                var t= this.t;
+                var t = this.t;
+                var self = this;
                 originalMap._syncMaps.forEach(function (toSync) {
-                    var newPoint=t.transform([originalMap.getCenter().lat,originalMap.getCenter().lng]);
-                    var newCenter=L.latLng(newPoint[0],newPoint[1]);
-                    toSync.setView(newCenter, originalMap.getZoom(), NO_ANIMATION);
+                    if (self.transformation) {
+                    var newPoint = t.transform([originalMap.getCenter().lat, originalMap.getCenter().lng]);
+                    var newCenter = L.latLng(newPoint[0], newPoint[1]);
+                    } else {
+                        var newCenter = [originalMap.getCenter().lat, originalMap.getCenter().lng];
+                    }
+                   // toSync.setView(newCenter, originalMap.getZoom(), NO_ANIMATION);
                 });
             }, this);
+            var selfConstructor=this;
             originalMap.dragging._draggable._updatePosition = function () {
                 L.Draggable.prototype._updatePosition.call(this);
                 var self = this;
                 originalMap._syncMaps.forEach(function (toSync) {
-                    L.DomUtil.setPosition(toSync.dragging._draggable._element, self._newPos);
+                    if(selfConstructor.transformation) {
+                        var newPoint = selfConstructor.t.transform([originalMap.getCenter().lat, originalMap.getCenter().lng]);
+                        var newCenter = L.latLng(newPoint[0], newPoint[1]);
+                        L.DomUtil.setPosition(toSync.dragging._draggable._element, self._newPos)
+                    }else{
+                        L.DomUtil.setPosition(toSync.dragging._draggable._element, self._newPos)
+                    }
                     toSync.eachLayer(function (layer) {
                         if (layer._google !== undefined) {
-                            var newPoint=self.t.transform([originalMap.getCenter().lat,originalMap.getCenter().lng]);
-                            var newCenter=L.latLng(newPoint[0],newPoint[1]);
+                            var newPoint = self.t.transform([originalMap.getCenter().lat, originalMap.getCenter().lng]);
+                            var newCenter = L.latLng(newPoint[0], newPoint[1]);
                             layer._google.setCenter(newCenter);
                         }
                     });

@@ -45,8 +45,7 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'js/lib/bootbox.min'],
         geo = self;
         $("#menu, #m2List, #m1List, #shapes, #parameters, #featuresMenu").prop("open", false);
         $('#send').click(function () {
-            $("#menu").css("margin-left", "-40%");
-            $("#menu").prop("open", false);
+            closeMenu();
             $('#browseButton').click();
             "use strict";
             var file1 = document.getElementById('myFile1').files[0],
@@ -117,8 +116,7 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'js/lib/bootbox.min'],
             }
         });
         $("#sendOverpass").click(function () {
-            $("#menu").css("margin-left", "-40%");
-            $("#menu").prop("open", false);
+            closeMenu();
             var numberMap = $("#selectedMap")[0].value;
             if (self.map1.over._layers.length > 1 && numberMap == String(1)) {
                 bootbox.confirm({
@@ -218,13 +216,11 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'js/lib/bootbox.min'],
                 $("#menu").css("margin-left", "0px");
                 $("#menu").prop("open", true);
             } else {
-                $("#menu").css("margin-left", "-40%");
-                $("#menu").prop("open", false);
+                closeMenu();
             }
         });
         $("#sendMenu").click(function () {
-            $("#menu").css("margin-left", "-40%");
-            $("#menu").prop("open", false);
+            closeMenu();
             if (self.markers1.markers.length < 5 || self.markers2.markers.length < 5) {
                 bootbox.alert("Minimum 5 points required", function () {
 
@@ -267,6 +263,14 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'js/lib/bootbox.min'],
             })
         });
         $("#getHomologus").click(function () {
+            closeMenu();
+            if (self.markers1.markers.length < 5 || self.markers2.markers.length < 5) {
+                bootbox.alert("Minimum 5 points required", function () {
+
+                });
+                return;
+            }
+
             var pairAttribute = [];
             var l = $(".selectDropdownLeft").find("select");
             var r = $(".selectDropdownRight").find("select");
@@ -274,8 +278,7 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'js/lib/bootbox.min'],
                 pairAttribute.push([l[key].value, r[key].value]);
             }
             var features = $('select.selectionFeatures').val();
-            $("#menu").css("margin-left", "-40%");
-            $("#menu").prop("open", false);
+            closeMenu();
             $("#loading").show();
             self.getHomologus(pairAttribute, features);
         });
@@ -283,26 +286,32 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'js/lib/bootbox.min'],
         $("#sync1").on('switchChange.bootstrapSwitch', function (event, state) {
             var coord_sx = [];
             var coord_dx = [];
-            for (var x = 0; x < 4; x++) {
-                coord_sx.push(self.markers1.markers[x]);
-                coord_dx.push(self.markers2.markers[x]);
-            }
+
             if (state == true) {
-                self.map1.sync(self.map2, null, coord_sx, coord_dx);
+
+                if(self.markers1.markers.length>=4 && self.markers2.markers.length>=4) {
+                    for (var x = 0; x < 4; x++) {
+                        coord_sx.push(self.markers1.markers[x]);
+                        coord_dx.push(self.markers2.markers[x]);
+                    }
+                    self.map1.sync(self.map2, null, coord_sx, coord_dx, true);
+                }else{
+                    self.map1.sync(self.map2, null, coord_sx, coord_dx, false);
+                }
+
             } else {
                 self.map1.unsync(self.map2);
                 $("#sync1").bootstrapSwitch('state', false);
 
-                if (self.markers1.markers.length <= 3 || self.markers2.markers.length <= 3) {
-                    if (!$("#sync1").bootstrapSwitch('state')) {
-                        $("#sync1").bootstrapSwitch("toggleDisabled");
-                    }
-
-                }
             }
         });
     });
 
+
+function closeMenu() {
+    $("#menu").css("margin-left", "-40%");
+    $("#menu").prop("open", false);
+}
 function successMessage(string) {
     $("#messageContainer").show();
     $("#messageContainer").html(string);

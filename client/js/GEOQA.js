@@ -458,9 +458,7 @@ define([
 
                 if (mainMarkers.markers.length > 3 && oppositeMarkers.markers.length > 3) {
 
-                    if ($("#sync1").bootstrapSwitch("disabled")) {
-                        $("#sync1").bootstrapSwitch("toggleDisabled");
-                    }
+                    $("#sync1").trigger("switchChange.bootstrapSwitch");
                 }
             }
         });
@@ -469,6 +467,7 @@ define([
 
         map.fitBounds(temp.getBounds());
         map.setZoom(14);
+        map.fitBounds(temp.getBounds());
 
     };
     GEOQA.prototype.findNearest = function (coordArray, point) {
