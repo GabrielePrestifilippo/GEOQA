@@ -13,6 +13,7 @@ public class Mappa {
     private final ArrayList<String> elencoLivelli;
     private final QuadTree quadTreeVertici;
     private final Map<String, ArrayList> entitaPerLivello;
+    public byte[] omologhiBeforeTransformation;
 
     public Mappa() {
         boundingBox = new Rectangle2d();
@@ -26,6 +27,7 @@ public class Mappa {
         quadTreeVertici = new QuadTree(estremiQuadTree, 50, 50, this.elencoVertici);
         quadTreeOmologhi = new QuadTree(estremiQuadTree, 50, 50, this.puntiOmologhi);
         this.entitaPerLivello = new HashMap();
+        this.omologhiBeforeTransformation=null;
     }
 
     protected void setEstremi(Rectangle2d estremi) {

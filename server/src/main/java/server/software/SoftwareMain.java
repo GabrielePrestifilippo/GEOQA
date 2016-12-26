@@ -132,6 +132,14 @@ public class SoftwareMain {
                 risultato.set(numeroIterazione, c, parametriStimati.get(c));
             }
             risultato.set(numeroIterazione, 6, source.getNumeroPuntiOmologhi());
+            try {
+				byte[] resultPoints=Utility.salvaOmologhi(source);
+				source.omologhiBeforeTransformation=resultPoints;
+				byte[] resultPoints1=Utility.salvaOmologhi(target);
+				target.omologhiBeforeTransformation=resultPoints1;
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
             output = Mappa.creaCopia(source, "");
             Trasforma.conAffine(output, parametriStimati);
             risultato.set(numeroIterazione, 7, Stima.getVettoreScarti(output.getPuntiOmologhi(), target.getPuntiOmologhi()).stimaVarianza(6));
@@ -191,9 +199,9 @@ public class SoftwareMain {
         System.out.println(outputTrasfAffine);
         
         System.out.println(new Statistiche(source.getPuntiOmologhi(), target.getPuntiOmologhi()).stampa());
-        //byte[] resultMap=Utility.salva(source);
-        byte[] resultPoints=Utility.salvaOmologhi(source);
-        byte[] resultPoints1=Utility.salvaOmologhi(target);
+     
+        byte[] resultPoints=source.omologhiBeforeTransformation;
+       byte[] resultPoints1=target.omologhiBeforeTransformation;// byte[] resultPoints1=Utility.salvaOmologhi(target);//
      
      
         ResultJSON response=new ResultJSON();
