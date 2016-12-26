@@ -64,7 +64,7 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'js/lib/bootbox.min'],
                             label: '<i class="fa fa-times"></i> Go back'
                         },
                         confirm: {
-                            label: '<i class="fa fa-check"></i> Delete old shape'
+                            label: '<i class="fa fa-check"></i> Delete old shape and reset markers'
                         }
                     },
                     callback: function (result) {
@@ -81,7 +81,7 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'js/lib/bootbox.min'],
                             label: '<i class="fa fa-times"></i> Go back'
                         },
                         confirm: {
-                            label: '<i class="fa fa-check"></i> Delete old shape'
+                            label: '<i class="fa fa-check"></i> Delete old shape and reset markers'
                         }
                     },
                     callback: function (result) {
@@ -94,10 +94,14 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'js/lib/bootbox.min'],
             }
             function continueAdd(result) {
                 if (result == true) {
+                    self.helper.cleanAllMarkers();
+                    var overMap;
                     numberMap == "1" ? layerMap = self.lMap1 : layerMap = self.lMap2;
                     numberMap == "1" ? numberMap = self.map1 : numberMap = self.map2;
+                    numberMap == "1" ? overMap = self.map1.over : overMap = self.map2.over;
                     if (layerMap) {
                         numberMap.removeLayer(layerMap);
+                        overMap.removeLayer(layerMap);
                     }
 
                     $("#loading").show();
@@ -127,7 +131,7 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'js/lib/bootbox.min'],
                             label: '<i class="fa fa-times"></i> Go back'
                         },
                         confirm: {
-                            label: '<i class="fa fa-check"></i> Delete old shape'
+                            label: '<i class="fa fa-check"></i> Delete old shape and reset markers'
                         }
                     },
                     callback: function (result) {
@@ -144,7 +148,7 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'js/lib/bootbox.min'],
                             label: '<i class="fa fa-times"></i> Go back'
                         },
                         confirm: {
-                            label: '<i class="fa fa-check"></i> Delete old shape'
+                            label: '<i class="fa fa-check"></i> Delete old shape and reset markers'
                         }
                     },
                     callback: function (result) {
@@ -156,14 +160,18 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'js/lib/bootbox.min'],
                 continueAdd(true);
             }
             function continueAdd(result) {
+                self.helper.cleanAllMarkers();
                 var numberMap = $("#selectedMap")[0].value;
                 var layerMap;
                 var mapToUse;
+                var overMap;
                 if (result == true) {
                     numberMap == "1" ? layerMap = self.lMap1 : layerMap = self.lMap2;
                     numberMap == "1" ? mapToUse = self.map1 : mapToUse = self.map2;
+                    numberMap == "1" ? overMap = self.map1.over : overMap = self.map2.over;
                     if (layerMap) {
                         mapToUse.removeLayer(layerMap);
+                        overMap.removeLayer(layerMap)
                     }
                     self.overPass(numberMap);
                 }
@@ -280,7 +288,13 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'js/lib/bootbox.min'],
             var features = $('select.selectionFeatures').val();
             closeMenu();
             $("#loading").show();
-            self.getHomologus(pairAttribute, features);
+            var angleParam = $("#angleParam").val();
+            var sigmaParam = $("#sigmaParam").val();
+            var distanceParam = $("#distanceParam").val();
+            var iterationsParam = $("#iterationsParam").val();
+            var parameters = [angleParam, sigmaParam, distanceParam, iterationsParam];
+
+            self.getHomologus(parameters, pairAttribute, features);
         });
         $("#sync1").bootstrapSwitch('state', false);
         $("#sync1").on('switchChange.bootstrapSwitch', function (event, state) {
@@ -289,13 +303,13 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'js/lib/bootbox.min'],
 
             if (state == true) {
 
-                if(self.markers1.markers.length>=4 && self.markers2.markers.length>=4) {
+                if (self.markers1.markers.length >= 4 && self.markers2.markers.length >= 4) {
                     for (var x = 0; x < 4; x++) {
                         coord_sx.push(self.markers1.markers[x]);
                         coord_dx.push(self.markers2.markers[x]);
                     }
                     self.map1.sync(self.map2, null, coord_sx, coord_dx, true);
-                }else{
+                } else {
                     self.map1.sync(self.map2, null, coord_sx, coord_dx, false);
                 }
 

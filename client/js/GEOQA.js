@@ -67,8 +67,16 @@ define([
 
     };
     GEOQA.prototype.addLeafletMaps = function () {
-        var omsMap1 = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {maxZoom: 25, maxNativeZoom: 18, attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'});
-        var omsMap2 = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {maxZoom: 25, maxNativeZoom: 18, attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'});
+        var omsMap1 = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+            maxZoom: 25,
+            maxNativeZoom: 18,
+            attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+        });
+        var omsMap2 = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+            maxZoom: 25,
+            maxNativeZoom: 18,
+            attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+        });
         this.map1 = L.map('map1', {center: [45.82789, 9.07617], zoom: 12, minZoom: 2});
 
         var base = {
@@ -99,7 +107,8 @@ define([
             successMessage("Selection performed");
         });
     };
-    GEOQA.prototype.getHomologus = function (/*pairAttribute, features*/) {
+    GEOQA.prototype.getHomologus = function (parameters) {
+        var [angleParam, sigmaParam, distanceParam, iterationsParam]=parameters;
         var self = this;
         var l1 = this.toCar(this.jsonMap1, "OSM");
         var l2 = this.toCar(this.jsonMap2, "DBT");
@@ -110,9 +119,10 @@ define([
         formData.append('layer2', new File([new Blob([l2])], "DBT00"));
         formData.append('points1', new File([new Blob([p1])], "OSM00_OMO"));
         formData.append('points2', new File([new Blob([p2])], "DBT00_OMO"));
-        formData.append('angolo', "10");
-        formData.append('sigma', "3");
-        formData.append('distanza', "1");
+        formData.append('angolo', angleParam);
+        formData.append('sigma', sigmaParam);
+        formData.append('distanza', distanceParam);
+        formData.append('iterazioni', iterationsParam);
 
         var promise = new Promise(function (resolve) {
 
@@ -125,7 +135,7 @@ define([
                 contentType: false,
                 cache: false,
                 success: function (res) {
-                    resolve([res.resultPoints,res.resultPoints1]);
+                    resolve([res.resultPoints, res.resultPoints1]);
                 },
                 error: function (e) {
                     console.log(e);
@@ -135,19 +145,51 @@ define([
         });
 
         promise.then(function (res) {
-            self.helper.cleanAllMarkers();
-            var marker1 = self.convertPoints(res[0]);
-            var marker2 = self.convertPoints(res[1]);
-            var x;
-            for (x = 0; x < marker1.length; x++) {
-                self.helper.insertMarker(self.map1, marker1[x][1], marker1[x][0], (x + 1), self.markers1, "map1");
-            }
-            for (x = 0; x < marker2.length; x++) {
-                self.helper.insertMarker(self.map2, marker2[x][1], marker2[x][0], (x + 1), self.markers2, "map2");
-            }
-            $("#loading").hide();
+                self.helper.cleanAllMarkers();
+                var marker1 = self.convertPoints(res[0]);
+                var marker2 = self.convertPoints(res[1]);
+                var x;
+                var allCoords1 = [];
+                self.jsonMap1.features.forEach(function (f) {
+                    f.geometry.coordinates[0].forEach(function (coords) {
+                        allCoords1.push(coords);
+                    })
+                });
+                var allCoords2 = [];
+                self.jsonMap2.features.forEach(function (f) {
+                    f.geometry.coordinates[0].forEach(function (coords) {
+                        allCoords2.push(coords);
+                    })
+                });
 
-        });
+                marker1.forEach(function (marker, i) {
+                    var min = Infinity;
+                    var closest = undefined;
+                    allCoords1.forEach(function (coords) {
+                        var distance = L.point([coords[1], coords[0]]).distanceTo(L.point(marker[0], marker[1]));
+                        if (distance < min) {
+                            min = distance;
+                            closest = L.point(coords[1], coords[0]);
+                        }
+                    });
+                    self.helper.insertMarker(self.map1, closest.x, closest.y, (i + 1), self.markers1, "map1");
+                });
+                marker2.forEach(function (marker, i) {
+                    var min = Infinity;
+                    var closest = undefined;
+                    allCoords2.forEach(function (coords) {
+                        var distance = L.point([coords[1], coords[0]]).distanceTo(L.point(marker[0], marker[1]));
+                        if (distance < min) {
+                            min = distance;
+                            closest = L.point(coords[1], coords[0]);
+                        }
+                    });
+                    self.helper.insertMarker(self.map2, closest.x, closest.y, (i + 1), self.markers2, "map2");
+                });
+                $("#loading").hide();
+
+            }
+        );
 
     };
 
@@ -168,11 +210,16 @@ define([
         jsonData.features.forEach(function (features, index) {
             arrayList[index] = [];
             search(features.geometry.coordinates, arrayList[index]);
+            if (features.properties.tags) {
+                arrayList[index].myProp = Object.keys(features.properties.tags)[0] + ":" + features.properties.tags[Object.keys(features.properties.tags)[0]];
+            } else {
+                arrayList[index].myProp = type;
+            }
 
         });
         var carString = jsonData.extent;
         arrayList.forEach(function (feature) {
-            carString += "\nA " + type;
+            carString += "\nA " + feature.myProp;
             feature.forEach(function (coords) {
                 var res = proj4('WGS84', self.projection, [coords[0], coords[1]]);
                 carString += "\n" + res[0] + " " + res[1] + " 0";
@@ -230,7 +277,7 @@ define([
             var [lat, lng] = p.split(" ");
             if (lat && lng) {
                 var res = proj4(self.projection, 'WGS84', [Number(lat), Number(lng)]);
-                newPoints.push(res);
+                newPoints.push([res[1], res[0]]);
             }
         });
 
@@ -259,6 +306,7 @@ define([
         formData.append('sigma', sigmaParam);
         formData.append('distanza', distanceParam);
         formData.append('iterazioni', iterationsParam);
+
 
         $.ajax({
             url: "http://localhost:8080/send",
@@ -293,7 +341,7 @@ define([
                 sliced: function (properties, zoom) {
                     return {
                         fillColor: '#222',
-                        fillOpacity: 0.85,
+                        fillOpacity: 0.55,
                         stroke: false,
                         fill: true
                     }
@@ -309,7 +357,7 @@ define([
                 sliced: function (properties, zoom) {
                     return {
                         fillColor: '#66ff66',
-                        fillOpacity: 0.85,
+                        fillOpacity: 0.55,
                         stroke: false,
                         fill: true
                     }
@@ -325,7 +373,7 @@ define([
                 sliced: function (properties, zoom) {
                     return {
                         fillColor: '#ff9966',
-                        fillOpacity: 0.85,
+                        fillOpacity: 0.55,
                         stroke: false,
                         fill: true
                     }
@@ -369,7 +417,7 @@ define([
     GEOQA.prototype.addJson = function (map, data) {
 
         if (data.features.length == 0)
-            return
+            return;
 
         var self = this;
 
@@ -394,8 +442,6 @@ define([
             getFeatureId: function (f) {
             }
         }).addTo(map);
-
-
         var temp = L.geoJson(data);
 
         if (map._container.id == "map1") {
@@ -416,8 +462,11 @@ define([
             this.UI.addPropToMenu(2, this.jsonMap2.prop);
         }
 
+        if (map.listenerClick) {
+            map.off('click', map.listenerClick);
+        }
 
-        map.on('click', function (e) {
+        map.listenerClick = function (e) {
             var popLocation = e.latlng;
             var z = leafletPip.pointInLayer([e.latlng.lng, e.latlng.lat], temp);
 
@@ -461,7 +510,12 @@ define([
                     $("#sync1").trigger("switchChange.bootstrapSwitch");
                 }
             }
-        });
+        };
+
+        map.on('click', map.listenerClick);
+
+
+
 
         map.over.addOverlay(vectorGrid, "Vector layer" + map.over._layers.length);
 
