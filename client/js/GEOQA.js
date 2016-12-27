@@ -107,11 +107,11 @@ define([
             successMessage("Selection performed");
         });
     };
-    GEOQA.prototype.getHomologus = function (parameters) {
+    GEOQA.prototype.getHomologus = function (parameters, attributes) {
         var [angleParam, sigmaParam, distanceParam, iterationsParam]=parameters;
         var self = this;
-        var l1 = this.toCar(this.jsonMap1, "OSM");
-        var l2 = this.toCar(this.jsonMap2, "DBT");
+        var l1 = this.toCar(this.jsonMap1, attributes, 0);
+        var l2 = this.toCar(this.jsonMap2, attributes, 1);
         var p1 = this.toOmo(this.markers1.markers);
         var p2 = this.toOmo(this.markers2.markers);
         var formData = new FormData();
@@ -193,7 +193,7 @@ define([
 
     };
 
-    GEOQA.prototype.toCar = function (jsonData, type) {
+    GEOQA.prototype.toCar = function (jsonData, attributes, type) {
         var self = this;
 
         function search(ob, arr) {
@@ -209,13 +209,25 @@ define([
         var arrayList = [];
         jsonData.features.forEach(function (features, index) {
             arrayList[index] = [];
+            arrayList[index].myProp = type;
             search(features.geometry.coordinates, arrayList[index]);
-            if (features.properties.tags) {
-                arrayList[index].myProp = Object.keys(features.properties.tags)[0] + ":" + features.properties.tags[Object.keys(features.properties.tags)[0]];
-            } else {
-                arrayList[index].myProp = type;
+            if (features.properties) {
+                for (var objKey in features.properties) {
+                    if (!features.properties[objKey]) {
+                        return
+                    }
+                    for (var a = 0; a < attributes.length; a++) {
+                        var [myKey, myVal] = attributes[a][type].split(":");
+                        if (myVal && features.properties[objKey][myKey] && features.properties[objKey][myKey] == myVal) {
+                            arrayList[index].myProp = myKey + ":" + myVal;
+                            return;
+                        } else if (!myVal && features.properties[objKey]==myKey) {
+                            arrayList[index].myProp = myKey;
+                            return;
+                        }
+                    }
+                }
             }
-
         });
         var carString = jsonData.extent;
         arrayList.forEach(function (feature) {
@@ -284,14 +296,14 @@ define([
         return newPoints;
     };
 
-    GEOQA.prototype.sendData = function (parameters) {
+    GEOQA.prototype.sendData = function (parameters, attributes) {
 
         var [angleParam, sigmaParam, distanceParam, iterationsParam]=parameters;
         var self = this;
 
 
-        var l1 = this.toCar(this.jsonMap1, "OSM");
-        var l2 = this.toCar(this.jsonMap2, "DBT");
+        var l1 = this.toCar(this.jsonMap1, attributes, 0);
+        var l2 = this.toCar(this.jsonMap2, attributes, 1);
 
         var p1 = this.toOmo(this.markers1.markers);
         var p2 = this.toOmo(this.markers2.markers);
@@ -513,8 +525,6 @@ define([
         };
 
         map.on('click', map.listenerClick);
-
-
 
 
         map.over.addOverlay(vectorGrid, "Vector layer" + map.over._layers.length);

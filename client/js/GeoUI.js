@@ -22,7 +22,8 @@ define([], function () {
     };
     GeoUI.prototype.addPropToMenu = function (map, prop) {
         var selectMenu;
-
+        this.availableProperties = [];
+        var self = this;
         if (map == 1) {
             selectMenu = $(".selectDropDownLeft");
         } else if (map == 2) {
@@ -44,9 +45,10 @@ define([], function () {
                     } else if (Object.prototype.toString.call(val) === '[object Array]' && !val[0]) {
                         //not defined yet
                     } else if (typeof(val) == "object" && val !== null && Object.keys(val).length > 0) {
-                        var element = Object.keys(val)[0] + ": " + val[Object.keys(val)[0]];
+                        var element = Object.keys(val)[0] + ":" + val[Object.keys(val)[0]];
                         if (listOfVal.indexOf(element) == -1) {
                             listOfVal.push(element);
+                            self.availableProperties.push(element);
                             group += "<option>" + element + "</option>"
                         }
                     }

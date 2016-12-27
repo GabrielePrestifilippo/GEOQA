@@ -243,7 +243,13 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'js/lib/bootbox.min'],
             var parameters = [angleParam, sigmaParam, distanceParam, iterationsParam];
 
             $("#loading").show();
-            self.sendData(parameters);
+            var pairAttribute = [];
+            var l = $(".selectDropDownLeft").find("select");
+            var r = $(".selectDropDownRight").find("select");
+            for (var key = 0; key < l.length; key++) {
+                pairAttribute.push([l[key].value, r[key].value]);
+            }
+            self.sendData(parameters, pairAttribute);
 
 
         });
@@ -280,8 +286,8 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'js/lib/bootbox.min'],
             }
 
             var pairAttribute = [];
-            var l = $(".selectDropdownLeft").find("select");
-            var r = $(".selectDropdownRight").find("select");
+            var l = $(".selectDropDownLeft").find("select");
+            var r = $(".selectDropDownRight").find("select");
             for (var key = 0; key < l.length; key++) {
                 pairAttribute.push([l[key].value, r[key].value]);
             }
