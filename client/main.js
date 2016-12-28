@@ -231,7 +231,12 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'js/lib/bootbox.min'],
             closeMenu();
             if (self.markers1.markers.length < 5 || self.markers2.markers.length < 5) {
                 bootbox.alert("Minimum 5 points required", function () {
-
+                });
+                return;
+            }
+            if (self.markers1.markers.length !== self.markers2.markers.length) {
+                bootbox.alert("The number of homologous should be the same on the first and second map.<br>" +
+                    "Points on first map: " + self.markers1.markers.length + "<br> Points on second map: " + self.markers2.markers.length, function () {
                 });
                 return;
             }
@@ -280,7 +285,12 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'js/lib/bootbox.min'],
             closeMenu();
             if (self.markers1.markers.length < 5 || self.markers2.markers.length < 5) {
                 bootbox.alert("Minimum 5 points required", function () {
-
+                });
+                return;
+            }
+            if (self.markers1.markers.length !== self.markers2.markers.length) {
+                bootbox.alert("The number of homologous should be the same on the first and second map.<br>" +
+                    "Points on first map: " + self.markers1.markers.length + "<br> Points on second map: " + self.markers2.markers.length, function () {
                 });
                 return;
             }
@@ -289,7 +299,9 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'js/lib/bootbox.min'],
             var l = $(".selectDropDownLeft").find("select");
             var r = $(".selectDropDownRight").find("select");
             for (var key = 0; key < l.length; key++) {
-                pairAttribute.push([l[key].value, r[key].value]);
+                if (l[key].value != 0 && r[key].value != 0) {
+                    pairAttribute.push([l[key].value, r[key].value]);
+                }
             }
             var features = $('select.selectionFeatures').val();
             closeMenu();
@@ -300,7 +312,7 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'js/lib/bootbox.min'],
             var iterationsParam = $("#iterationsParam").val();
             var parameters = [angleParam, sigmaParam, distanceParam, iterationsParam];
 
-            self.getHomologus(parameters, pairAttribute, features);
+            self.getHomologous(parameters, pairAttribute, features);
         });
         $("#sync1").bootstrapSwitch('state', false);
         $("#sync1").on('switchChange.bootstrapSwitch', function (event, state) {
@@ -318,6 +330,7 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'js/lib/bootbox.min'],
                 } else {
                     self.map1.sync(self.map2, null, coord_sx, coord_dx, false);
                 }
+                $("#sync1").bootstrapSwitch('state', true);
 
             } else {
                 self.map1.unsync(self.map2);

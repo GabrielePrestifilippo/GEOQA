@@ -42,7 +42,7 @@ define([
         var self = this;
 
         //Temporary maps
-
+/*
         setTimeout(function () {
             $.ajax({
                 // url: 'osm.geojson',
@@ -64,7 +64,7 @@ define([
 
         }, 2000)
 
-
+*/
     };
     GEOQA.prototype.addLeafletMaps = function () {
         var omsMap1 = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
@@ -107,7 +107,7 @@ define([
             successMessage("Selection performed");
         });
     };
-    GEOQA.prototype.getHomologus = function (parameters, attributes) {
+    GEOQA.prototype.getHomologous = function (parameters, attributes) {
         var [angleParam, sigmaParam, distanceParam, iterationsParam]=parameters;
         var self = this;
         var l1 = this.toCar(this.jsonMap1, attributes, 0);
@@ -123,6 +123,9 @@ define([
         formData.append('sigma', sigmaParam);
         formData.append('distanza', distanceParam);
         formData.append('iterazioni', iterationsParam);
+        if(attributes.length) {
+            formData.append('attributes', attributes);
+        }
 
         var promise = new Promise(function (resolve) {
 
@@ -318,8 +321,9 @@ define([
         formData.append('sigma', sigmaParam);
         formData.append('distanza', distanceParam);
         formData.append('iterazioni', iterationsParam);
-
-
+        if(attributes.length) {
+            formData.append('attributes', attributes);
+        }
         $.ajax({
             url: "http://localhost:8080/send",
             type: "POST",
@@ -517,9 +521,8 @@ define([
 
                 self.helper.insertMarker(map, nearest.y, nearest.x, markerNumber, mainMarkers, e.target._container.id);
 
-                if (mainMarkers.markers.length > 3 && oppositeMarkers.markers.length > 3) {
-
-                    $("#sync1").trigger("switchChange.bootstrapSwitch");
+                if (mainMarkers.markers.length > 3 && oppositeMarkers.markers.length > 3 && $("#sync1").bootstrapSwitch('state')) {
+                    $("#sync1").bootstrapSwitch('state',true);
                 }
             }
         };
