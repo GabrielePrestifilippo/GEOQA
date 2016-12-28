@@ -5,6 +5,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.List;
+
+import libGeometry.TabellaRelazioneLivelli;
+
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -29,12 +33,22 @@ public class PostController {
 			@RequestParam(value = "angolo", required = false) Double angolo,
 			@RequestParam(value = "sigma", required = false) Double sigma,
 			@RequestParam(value = "distanza", required = false) Double distanza,
-			@RequestParam(value = "iterazioni", required = false) Integer iterazioni
+			@RequestParam(value = "iterazioni", required = false) Integer iterazioni,
+			@RequestParam(value = "attributes", required = false) List<String> attributes
 	) throws IOException {
 		SoftwareMain test = new SoftwareMain();
 		test.setParams(angolo, sigma, distanza, iterazioni);
 		test.setSource(layer1.getBytes(),points1.getBytes());
 		test.setTarget(layer2.getBytes(),points2.getBytes());
+		TabellaRelazioneLivelli tabellaRelazioneLivelli=null;
+		if(attributes!=null){
+			tabellaRelazioneLivelli=new TabellaRelazioneLivelli();
+			for(int i=0;i<attributes.size()/2;i++){
+				tabellaRelazioneLivelli.aggiungiRelazione(attributes.get(i),attributes.get(i+1));
+			}
+		}
+		test.setTabellaRelazioneLivelli(tabellaRelazioneLivelli);
+		
 		String result = test.execute();
 		System.out.println("Res ready");
 		return ResponseEntity.ok().body(result);
@@ -50,12 +64,22 @@ public class PostController {
 			@RequestParam(value = "angolo", required = false) Double angolo,
 			@RequestParam(value = "sigma", required = false) Double sigma,
 			@RequestParam(value = "distanza", required = false) Double distanza,
-			@RequestParam(value = "iterazioni", required = false) Integer iterazioni
+			@RequestParam(value = "iterazioni", required = false) Integer iterazioni,
+			@RequestParam(value = "attributes", required = false) List<String> attributes
 	) throws IOException {
 		SoftwareMain test = new SoftwareMain();
 		test.setParams(angolo, sigma, distanza, iterazioni);
 		test.setSource(layer1.getBytes(),points1.getBytes());
 		test.setTarget(layer2.getBytes(),points2.getBytes());
+		
+		TabellaRelazioneLivelli tabellaRelazioneLivelli=null;
+		if(attributes!=null){
+			tabellaRelazioneLivelli=new TabellaRelazioneLivelli();
+			for(int i=0;i<attributes.size()/2;i++){
+				tabellaRelazioneLivelli.aggiungiRelazione(attributes.get(i),attributes.get(i+1));
+			}
+		}
+		test.setTabellaRelazioneLivelli(tabellaRelazioneLivelli);
 		String result = test.getHomologus();
 		System.out.println("Res ready");
 		return ResponseEntity.ok().body(result);

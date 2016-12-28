@@ -8,9 +8,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+
 import libSpline.*;
 import libGeometry.*;
 import libMath.*;
+
 import com.google.gson.Gson;
 
 public class SoftwareMain {
@@ -21,6 +23,7 @@ public class SoftwareMain {
 	private double sigma;
 	private double distanza;
 	private int iterazioni;
+	private TabellaRelazioneLivelli tabellaRelazioneLivelli;
 
 	public SoftwareMain() {
     }
@@ -120,7 +123,7 @@ public class SoftwareMain {
         return ("splineX;var(X);Fo(X);SplineY;var(Y);Fo(Y);Fteorico\r\n" + risultati.stampa());
     }
 
-    public String stimaAffine(Mappa source, Mappa target, int numeroIterazioni, double angolo, double sigma, double distanzaMax) {
+    public String stimaAffine(Mappa source, Mappa target, int numeroIterazioni, double angolo, double sigma, double distanzaMax, TabellaRelazioneLivelli tabellaRelazioneLivelli) {
         boolean ripeti = true;
         int numeroIterazione = 0;
         Matrix parametriStimati = null;
@@ -143,7 +146,13 @@ public class SoftwareMain {
             output = Mappa.creaCopia(source, "");
             Trasforma.conAffine(output, parametriStimati);
             risultato.set(numeroIterazione, 7, Stima.getVettoreScarti(output.getPuntiOmologhi(), target.getPuntiOmologhi()).stimaVarianza(6));
-            Stima.FischerGeometrico(source, target, output, angolo, sigma, distanzaMax);
+          
+			if(tabellaRelazioneLivelli!=null){
+            	Stima.FischerSemantico(source, target, output, angolo, sigma, distanzaMax, tabellaRelazioneLivelli);
+            }else{
+            	Stima.FischerGeometrico(source, target, output, angolo, sigma, distanzaMax);
+            }
+			
             numeroIterazione++;
             if (source.getNumeroPuntiOmologhi() < 5) {
                 ripeti = false;
@@ -180,6 +189,12 @@ public class SoftwareMain {
     	this.iterazioni=iterazioni;
     }
     
+	public void setTabellaRelazioneLivelli(
+			TabellaRelazioneLivelli tabellaRelazioneLivelli) {
+		this.tabellaRelazioneLivelli=tabellaRelazioneLivelli;
+		
+	}
+    
     public String getHomologus() throws IOException{
     	
    	 	//SoftwareMain test = new SoftwareMain();
@@ -193,15 +208,15 @@ public class SoftwareMain {
         double angolo = this.angolo * Math.PI / 180;
         double sigma = this.sigma;
         double distanzaMax = this.distanza; 
+        TabellaRelazioneLivelli tabellaRelazioneLivelli=this.tabellaRelazioneLivelli;
         
-        
-        String outputTrasfAffine = this.stimaAffine(source, target, numeroIterazioni, angolo, sigma, distanzaMax);
+        String outputTrasfAffine = this.stimaAffine(source, target, numeroIterazioni, angolo, sigma, distanzaMax, tabellaRelazioneLivelli);
         System.out.println(outputTrasfAffine);
         
         System.out.println(new Statistiche(source.getPuntiOmologhi(), target.getPuntiOmologhi()).stampa());
      
         byte[] resultPoints=source.omologhiBeforeTransformation;
-       byte[] resultPoints1=target.omologhiBeforeTransformation;// byte[] resultPoints1=Utility.salvaOmologhi(target);//
+        byte[] resultPoints1=target.omologhiBeforeTransformation;// byte[] resultPoints1=Utility.salvaOmologhi(target);//
      
      
         ResultJSON response=new ResultJSON();
@@ -261,21 +276,20 @@ public class SoftwareMain {
         // TabellaRelazioneLivelli tabella= new TabellaRelazioneLivelli();
          System.out.println(new Statistiche(source.getPuntiOmologhi(), target.getPuntiOmologhi()).stampa());
 
-         int numeroIterazioni = 5;
+         int numeroIterazioni = this.iterazioni;
          double angolo = this.angolo * Math.PI / 180;
          double sigma = this.sigma;
          double distanzaMax = this.distanza; 
+         TabellaRelazioneLivelli tabellaRelazioneLivelli=this.tabellaRelazioneLivelli;
          
-         
-         String outputTrasfAffine = this.stimaAffine(source, target, numeroIterazioni, angolo, sigma, distanzaMax);
+         String outputTrasfAffine = this.stimaAffine(source, target, numeroIterazioni, angolo, sigma, distanzaMax, tabellaRelazioneLivelli);
          System.out.println(outputTrasfAffine);
          
          System.out.println(new Statistiche(source.getPuntiOmologhi(), target.getPuntiOmologhi()).stampa());
          byte[] resultMap=Utility.salva(source);
          
-         int filtraggio = 2;
-         numeroIterazioni = 4;
-         String outputTrasfSpline = this.stimaSpline(source, target, filtraggio, numeroIterazioni);
+         //int filtraggio = 2;
+         //String outputTrasfSpline = this.stimaSpline(source, target, filtraggio, numeroIterazioni);
 
          ResultJSON response=new ResultJSON();
          
@@ -328,6 +342,8 @@ public class SoftwareMain {
          
          return toSend;
     }
+
+
     
     /*public static void main(String[] args) throws IOException {
         SoftwareMain test = new SoftwareMain();
