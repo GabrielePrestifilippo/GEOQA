@@ -191,6 +191,7 @@ button#addAssociation {
     color: white;
     background-color: #337ab7;
     border-radius: 6px;
+    display:none;
 }
 
 #footer {
@@ -338,4 +339,7 @@ li {
 .modal-footer {
     background-color: #efefef;
     border-radius: 5px;
+}
+span.input-group-addon {
+    min-width: 150px;
 }
