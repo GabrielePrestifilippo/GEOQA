@@ -32,8 +32,7 @@ requirejs.config({
         'osmtogeojson': 'leaflet/osmtogeojson',
         'bootstrapSwitch': 'js/lib/bootstrap-switch.min',
         'leaflet-vector': 'js/Leaflet.VectorGrid.bundled',
-        'leaflet-marker': 'leaflet/leaflet.markercluster',
-
+        'leaflet-marker': 'leaflet/leaflet.markercluster'
     }
 });
 

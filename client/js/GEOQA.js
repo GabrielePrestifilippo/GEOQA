@@ -42,29 +42,29 @@ define([
         var self = this;
 
         //Temporary maps
-/*
-        setTimeout(function () {
-            $.ajax({
-                // url: 'osm.geojson',
-                url: 'map2.geojson',
-                type: 'POST',
-                success: function (data) {
-                    self.addJson(self.map1, data);
-                }
-            });
+        /*
+         setTimeout(function () {
+         $.ajax({
+         // url: 'osm.geojson',
+         url: 'map2.geojson',
+         type: 'POST',
+         success: function (data) {
+         self.addJson(self.map1, data);
+         }
+         });
 
-            $.ajax({
-                // url: 'dbtr.geojson',
-                url: 'map1.geojson',
-                type: 'POST',
-                success: function (data) {
-                    self.addJson(self.map2, data);
-                }
-            });
+         $.ajax({
+         // url: 'dbtr.geojson',
+         url: 'map1.geojson',
+         type: 'POST',
+         success: function (data) {
+         self.addJson(self.map2, data);
+         }
+         });
 
-        }, 2000)
+         }, 2000)
 
-*/
+         */
     };
     GEOQA.prototype.addLeafletMaps = function () {
         var omsMap1 = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
@@ -108,7 +108,7 @@ define([
         });
     };
     GEOQA.prototype.getHomologous = function (parameters, attributes) {
-        var [angleParam, sigmaParam, distanceParam, iterationsParam]=parameters;
+        var [angleParam, sigmaParam, distanceParam, iterationsParam] = parameters;
         var self = this;
         var l1 = this.toCar(this.jsonMap1, attributes, 0);
         var l2 = this.toCar(this.jsonMap2, attributes, 1);
@@ -123,7 +123,7 @@ define([
         formData.append('sigma', sigmaParam);
         formData.append('distanza', distanceParam);
         formData.append('iterazioni', iterationsParam);
-        if(attributes.length) {
+        if (attributes.length) {
             formData.append('attributes', attributes);
         }
 
@@ -199,7 +199,9 @@ define([
     GEOQA.prototype.toCar = function (jsonData, attributes, type) {
         var self = this;
 
-        function search(ob, arr) {
+        //searchAndFill will fill an array with the coordinates of each feature
+        //digging deep into the objects inside
+        function searchAndFill(ob, arr) {
             if (typeof(ob) == "object" && typeof(ob[0]) == "number") {
                 arr.push([ob[0], ob[1]]);
             } else {
@@ -210,21 +212,34 @@ define([
         }
 
         var arrayList = [];
+
+        //for each feature of the json
         jsonData.features.forEach(function (features, index) {
             arrayList[index] = [];
-            arrayList[index].myProp = type;
-            search(features.geometry.coordinates, arrayList[index]);
+            arrayList[index].myProp = type; //assign a properties to each feature, initialize it to a number (0,1->map0, map1)
+
+            //retrieve all the coordinates for the selected feature and put the in the arrayList
+            searchAndFill(features.geometry.coordinates, arrayList[index]);
+
+            //if the feature has properties
             if (features.properties) {
+                //for each property
                 for (var objKey in features.properties) {
-                    if (!features.properties[objKey]) {
+                    if (!features.properties[objKey]) { //check if some properties are null
                         return
                     }
+                    //for each available attribute, got from the association list:
                     for (var a = 0; a < attributes.length; a++) {
+
+                        //try to get a key-value pair splitting the attribute over ":", it is the OSM case
                         var [myKey, myVal] = attributes[a][type].split(":");
+                        //if key-val are found, so we have a OSM attributes
                         if (myVal && features.properties[objKey][myKey] && features.properties[objKey][myKey] == myVal) {
                             arrayList[index].myProp = myKey + ":" + myVal;
+                            //set the property of the current feature to key:val
                             return;
-                        } else if (!myVal && features.properties[objKey]==myKey) {
+                        } else if (!myVal && features.properties[objKey] == myKey) {
+                            //if we have just an attribute not in the form key:val, we simply set the value
                             arrayList[index].myProp = myKey;
                             return;
                         }
@@ -232,10 +247,13 @@ define([
                 }
             }
         });
+        //we fill the car file, by putting the extent in the first line
         var carString = jsonData.extent;
         arrayList.forEach(function (feature) {
+            //for each coordinate we put a new line with A coordinates
             carString += "\nA " + feature.myProp;
             feature.forEach(function (coords) {
+                //we convert the coordinates into 32632
                 var res = proj4('WGS84', self.projection, [coords[0], coords[1]]);
                 carString += "\n" + res[0] + " " + res[1] + " 0";
             })
@@ -321,7 +339,7 @@ define([
         formData.append('sigma', sigmaParam);
         formData.append('distanza', distanceParam);
         formData.append('iterazioni', iterationsParam);
-        if(attributes.length) {
+        if (attributes.length) {
             formData.append('attributes', attributes);
         }
         $.ajax({
@@ -522,7 +540,7 @@ define([
                 self.helper.insertMarker(map, nearest.y, nearest.x, markerNumber, mainMarkers, e.target._container.id);
 
                 if (mainMarkers.markers.length > 3 && oppositeMarkers.markers.length > 3 && $("#sync1").bootstrapSwitch('state')) {
-                    $("#sync1").bootstrapSwitch('state',true);
+                    $("#sync1").bootstrapSwitch('state', true);
                 }
             }
         };
