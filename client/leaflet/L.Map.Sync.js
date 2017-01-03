@@ -180,10 +180,12 @@
                     } else {
                         var newCenter = [originalMap.getCenter().lat, originalMap.getCenter().lng];
                     }
-                   // toSync.setView(newCenter, originalMap.getZoom(), NO_ANIMATION);
+                    toSync.setView(newCenter, originalMap.getZoom(), NO_ANIMATION);
                 });
             }, this);
+
             var selfConstructor=this;
+
             originalMap.dragging._draggable._updatePosition = function () {
                 L.Draggable.prototype._updatePosition.call(this);
                 var self = this;
@@ -191,17 +193,10 @@
                     if(selfConstructor.transformation) {
                         var newPoint = selfConstructor.t.transform([originalMap.getCenter().lat, originalMap.getCenter().lng]);
                         var newCenter = L.latLng(newPoint[0], newPoint[1]);
-                        L.DomUtil.setPosition(toSync.dragging._draggable._element, self._newPos)
+                       // L.DomUtil.setPosition(toSync.dragging._draggable._element, self._newPos)
                     }else{
-                        L.DomUtil.setPosition(toSync.dragging._draggable._element, self._newPos)
+                      //  L.DomUtil.setPosition(toSync.dragging._draggable._element, self._newPos)
                     }
-                    toSync.eachLayer(function (layer) {
-                        if (layer._google !== undefined) {
-                            var newPoint = self.t.transform([originalMap.getCenter().lat, originalMap.getCenter().lng]);
-                            var newCenter = L.latLng(newPoint[0], newPoint[1]);
-                            layer._google.setCenter(newCenter);
-                        }
-                    });
                     toSync.fire('moveend');
                 });
             };

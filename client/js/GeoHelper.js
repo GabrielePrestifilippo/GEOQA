@@ -221,5 +221,4 @@ define(['js/lib/bootbox.min'], function (bootbox) {
         }
     };
     return GeoHelper;
-})
-;
+});
