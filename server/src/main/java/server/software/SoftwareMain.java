@@ -197,8 +197,6 @@ public class SoftwareMain {
     
     public String getHomologus() throws IOException{
     	
-   	 	//SoftwareMain test = new SoftwareMain();
-   	 
         Mappa source = this.source; 
         Mappa target = this.target; 
         
@@ -213,14 +211,17 @@ public class SoftwareMain {
         String outputTrasfAffine = this.stimaAffine(source, target, numeroIterazioni, angolo, sigma, distanzaMax, tabellaRelazioneLivelli);
         System.out.println(outputTrasfAffine);
         
-        System.out.println(new Statistiche(source.getPuntiOmologhi(), target.getPuntiOmologhi()).stampa());
-     
+      
+       
         byte[] resultPoints=source.omologhiBeforeTransformation;
-        byte[] resultPoints1=target.omologhiBeforeTransformation;// byte[] resultPoints1=Utility.salvaOmologhi(target);//
-     
+        byte[] resultPoints1=target.omologhiBeforeTransformation;
+    
      
         ResultJSON response=new ResultJSON();
-       
+        String statistiche=new Statistiche(source.getPuntiOmologhi(), target.getPuntiOmologhi()).stampa();
+        System.out.println(statistiche);
+        response.setStatistics(statistiche);
+        
         String points="";
         InputStream is = null;
         is = new ByteArrayInputStream(resultPoints);
