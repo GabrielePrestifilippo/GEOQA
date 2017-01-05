@@ -2,19 +2,20 @@ define([
     'jquery',
     'bootstrap',
     'osmtogeojson',
+    'leaflet',
     'js/GeoHelper',
     'leaflet-vector',
-    'leaflet/leaflet-pip.js',
+    'leaflet-pip',
     'js/proj4',
     'leaflet-marker',
     'bootstrap-select',
     'leaflet-areaselect',
     'leaflet-MapSync',
     'bootstrapSwitch',
-    'js/transformation',
-    'leaflet'
+    'js/transformation'
 
-], function ($, bootstrap, osmtogeojson, GeoHelper, LeafletVectorGridbundled, leafletPip, proj4) {
+
+], function ($, bootstrap, osmtogeojson, L, GeoHelper, LeafletVectorGridbundled, leafletPip, proj4) {
     var GEOQA = function (UI) {
         this.markers1 = {
             markers: [],
@@ -38,35 +39,39 @@ define([
         this.map2.addLayer(this.markers2.cluster);
         this.helper = new GeoHelper(this);
         this.UI = UI;
-        this.resultJSON=null;
+        this.resultJSON = null;
         this.projection = "+proj=utm +zone=32 +ellps=WGS84 +datum=WGS84 +units=m +no_defs";
         var self = this;
 
         //Temporary maps
 
-         setTimeout(function () {
-         $.ajax({
-         // url: 'osm.geojson',
-         url: 'map2.geojson',
-         type: 'POST',
-         success: function (data) {
-         self.addJson(self.map1, data);
-         }
-         });
+        setTimeout(function () {
+            $.ajax({
+                // url: 'osm.geojson',
+                url: 'map2.geojson',
+                type: 'POST',
+                success: function (data) {
+                    self.addJson(self.map1, data);
+                }
+            });
 
-         $.ajax({
-         // url: 'dbtr.geojson',
-         url: 'map1.geojson',
-         type: 'POST',
-         success: function (data) {
-         self.addJson(self.map2, data);
-         }
-         });
+            $.ajax({
+                // url: 'dbtr.geojson',
+                url: 'map1.geojson',
+                type: 'POST',
+                success: function (data) {
+                    self.addJson(self.map2, data);
+                }
+            });
 
-         }, 2000)
+        }, 2000)
 
 
     };
+
+    /**
+     * Create two basic leaflet maps
+     */
     GEOQA.prototype.addLeafletMaps = function () {
         var omsMap1 = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
             maxZoom: 25,
@@ -101,13 +106,19 @@ define([
         var self = this;
         this.map1.on('areaselected', function (e) {
             self.bbox1 = e.bounds._southWest.lat + "," + e.bounds._southWest.lng + "," + e.bounds._northEast.lat + "," + e.bounds._northEast.lng;
-            successMessage("Selection performed");
+            self.UI.successMessage("Selection performed");
         });
         this.map2.on('areaselected', function (e) {
             self.bbox2 = e.bounds._southWest.lat + "," + e.bounds._southWest.lng + "," + e.bounds._northEast.lat + "," + e.bounds._northEast.lng;
-            successMessage("Selection performed");
+            self.UI.successMessage("Selection performed");
         });
     };
+
+    /**
+     * Retrieve the homologous points from the server and insert the markers on the map
+     * @param parameters, transformation parameters
+     * @param attributes, attributes for the association
+     */
     GEOQA.prototype.getHomologous = function (parameters, attributes) {
         var [angleParam, sigmaParam, distanceParam, iterationsParam] = parameters;
         var self = this;
@@ -129,7 +140,6 @@ define([
         }
 
         var promise = new Promise(function (resolve) {
-
             $.ajax({
                 url: "http://localhost:8080/getHomologus",
                 type: "POST",
@@ -150,7 +160,7 @@ define([
 
         promise.then(function (res) {
                 var resultParam = res.statistics.split("\n")[1].split(";");
-                self.showStatistics(resultParam);
+                self.UI.showStatistics(resultParam);
                 self.helper.cleanAllMarkers();
                 var marker1 = self.convertPoints(res.resultPoints);
                 var marker2 = self.convertPoints(res.resultPoints1);
@@ -199,6 +209,13 @@ define([
 
     };
 
+    /**
+     * Convert a JSON to a CAR format
+     * @param jsonData, input JSON file
+     * @param attributes, attributes to insert
+     * @param type, variable to indicate if is the first or second map
+     * @returns {number|string|*}
+     */
     GEOQA.prototype.toCar = function (jsonData, attributes, type) {
         var self = this;
 
@@ -265,7 +282,11 @@ define([
         return carString;
     };
 
-
+    /**
+     * Convert a list of points to the OMO format
+     * @param points, list of points
+     * @returns {string}, OMO string
+     */
     GEOQA.prototype.toOmo = function (points) {
         var self = this;
         var omoString = "";
@@ -277,19 +298,21 @@ define([
         return omoString;
     };
 
+    /**
+     * Create a JSON from a CAR string
+     * @param data
+     * @returns {{type: string, features: Array}}
+     */
     GEOQA.prototype.createJSON = function (data) {
         var self = this;
         var g = {"type": "FeatureCollection", "features": []};
-
         var f = {"type": "Feature", "properties": {}, "meta": {}, "geometry": {"type": "Polygon", "coordinates": [[]]}};
 
-
-        var geompoints = data.resultMap.split("\n");
-        geompoints.shift();
+        var geomPoints = data.resultMap.split("\n");
+        geomPoints.shift();
         var currentFeature = JSON.parse(JSON.stringify(f));
 
-        geompoints.forEach(function (point) {
-
+        geomPoints.forEach(function (point) {
             if (point.indexOf("A") !== -1 || point.indexOf("L") !== -1) {
                 currentFeature = JSON.parse(JSON.stringify(f));
                 g.features.push(currentFeature);
@@ -305,6 +328,11 @@ define([
         return g;
     };
 
+    /**
+     * Transform the points from OMO format to WGS84
+     * @param points
+     * @returns {Array}
+     */
     GEOQA.prototype.convertPoints = function (points) {
         var newPoints = [];
         var self = this;
@@ -320,6 +348,11 @@ define([
         return newPoints;
     };
 
+    /**
+     * Send the data to the server for the transformation
+     * @param parameters, parameters for the transformation
+     * @param attributes, attributes for the associations
+     */
     GEOQA.prototype.sendData = function (parameters, attributes) {
 
         var [angleParam, sigmaParam, distanceParam, iterationsParam]=parameters;
@@ -371,20 +404,26 @@ define([
         });
 
     };
+
+    /**
+     * Insert the result map on the client
+     * @param data, JSON file representing the map
+     * @param resultParam, result parameters from the transformation
+     */
     GEOQA.prototype.resultMap = function (data, resultParam) {
 
         var omsMap3 = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'});
         var resultMap = L.map('resultMap', {center: [45.82789, 9.07617], zoom: 5, minZoom: 4});
         resultMap.addLayer(omsMap3);
-        this.resultJSON=data;
+        this.resultlMap = resultMap;
+        this.resultJSON = data;
         var res = L.vectorGrid.slicer(data, {
-
             rendererFactory: L.svg.tile,
             vectorTileLayerStyles: {
                 sliced: function (properties, zoom) {
                     return {
                         fillColor: '#222',
-                        fillOpacity: 0.55,
+                        fillOpacity: 1,
                         stroke: false,
                         fill: true
                     }
@@ -400,7 +439,7 @@ define([
                 sliced: function (properties, zoom) {
                     return {
                         fillColor: '#66ff66',
-                        fillOpacity: 0.55,
+                        fillOpacity: 1,
                         stroke: false,
                         fill: true
                     }
@@ -409,14 +448,14 @@ define([
             interactive: true,
             getFeatureId: function (f) {
             }
-        });
+        }).addTo(resultMap);
         var map2 = L.vectorGrid.slicer(this.jsonMap2, {
             rendererFactory: L.svg.tile,
             vectorTileLayerStyles: {
                 sliced: function (properties, zoom) {
                     return {
                         fillColor: '#ff9966',
-                        fillOpacity: 0.55,
+                        fillOpacity: 1,
                         stroke: false,
                         fill: true
                     }
@@ -425,18 +464,19 @@ define([
             interactive: true,
             getFeatureId: function (f) {
             }
-        });
+        }).addTo(resultMap);
         var base = {
             "Base Map": omsMap3
         };
         var external = {};
 
         var over = new L.control.layers(base, external).addTo(resultMap);
-
+        map1.setOpacity(0);
+        map2.setOpacity(0);
         over.addOverlay(map1, "Map 1");
         over.addOverlay(map2, "Map 2");
         over.addOverlay(res, "Result map");
-
+        this.finalLayers = [map1, map2, res];
         $("#map1, #map2").hide();
         $("#resultMap").show();
         $("#downloadButton").show();
@@ -446,21 +486,15 @@ define([
         var lng = data.features[0].geometry.coordinates[0][0][0] ? data.features[0].geometry.coordinates[0][0][0] : data.features[0].geometry.coordinates[0][0];
         resultMap.invalidateSize();
         resultMap.setView(new L.LatLng(lat, lng), 16);
-        this.showStatistics(resultParam);
+        this.UI.showStatistics(resultParam);
         $("#loading").hide();
     };
 
-    GEOQA.prototype.showStatistics = function (resultParam) {
-        $("#resultData").show();
-        $("#mediaDeltaX").val(String(resultParam[1]));
-        $("#varianzaDeltaX").val(String(resultParam[2]));
-        $("#mediaDeltaY").val(String(resultParam[3]));
-        $("#mediaDistanze").val(String(resultParam[4]));
-        $("#varianzaDistanze").val(String(resultParam[5]));
-        $("#distanzaMinima").val(String(resultParam[6]));
-        $("#distanzaMassima").val(String(resultParam[7]));
-    };
-
+    /**
+     * Add a JSON file to the map
+     * @param map, map in which to insert the layer
+     * @param data, JSON data to be inserted
+     */
     GEOQA.prototype.addJson = function (map, data) {
 
         if (data.features.length == 0)
@@ -514,7 +548,6 @@ define([
         }
 
         map.listenerClick = function (e) {
-            var popLocation = e.latlng;
             var z = leafletPip.pointInLayer([e.latlng.lng, e.latlng.lat], temp);
 
             if (z[0] && z[0].feature && z[0].feature.geometry.coordinates) {
@@ -538,7 +571,7 @@ define([
                     oppositeMarkers = self.markers1;
                 }
                 if (mainMarkers.markers.length > oppositeMarkers.markers.length) {
-                    successMessage("Please, insert first another marker in the other map");
+                    self.UI.successMessage("Please, insert first another marker in the other map");
                     return;
                 }
 
@@ -568,6 +601,13 @@ define([
         map.fitBounds(temp.getBounds());
 
     };
+
+    /**
+     * Find the closest point in an array to a specified point
+     * @param coordArray, array of coordinates (can have children)
+     * @param point, specified point
+     * @returns {Leaflet.Point}
+     */
     GEOQA.prototype.findNearest = function (coordArray, point) {
         var min = Infinity;
         var closest = undefined;
@@ -596,20 +636,16 @@ define([
             }
         }
 
-
         return closest;
     };
-    GEOQA.prototype.overPass = function (numberMap) {
-        var bbox;
-        if (numberMap == "1") {
-            bbox = this.bbox1;
-        } else {
-            bbox = this.bbox2;
-        }
-        if (!bbox) {
-            alert("Please perform a selection on map " + numberMap + " before");
-            return;
-        }
+
+    /**
+     * Retrieve Buildings from Overpass and insert into a map
+     * @param numberMap
+     */
+    GEOQA.prototype.overPass = function (bbox,map) {
+
+
 
         var data = '[out:json][timeout:25];(way["building"](' + bbox + ');relation["building"](' + bbox + '););out ;>;out skel qt;';
         var self = this;
@@ -621,12 +657,8 @@ define([
             type: 'POST',
             success: function (data) {
                 data = osmtogeojson(data);
-                if (numberMap == "1") {
-                    numberMap = self.map1;
-                } else {
-                    numberMap = self.map2;
-                }
-                self.addJson(numberMap, data);
+
+                self.addJson(map, data);
             },
             error: function (e) {
                 console.log("error: " + JSON.stringify(e));
