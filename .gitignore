@@ -1,5 +1,5 @@
 .idea/
 server/target/
 server/.settings/org.eclipse.jdt.core.prefs
-client/.idea/workspace.xml
+client/.idea/
 .idea/workspace.xml
