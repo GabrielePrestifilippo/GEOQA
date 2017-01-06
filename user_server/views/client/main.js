@@ -80,6 +80,7 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'bootstrapSlider', 'js/lib/
                 fd1 = new FormData();
             fd1.append('upload', file1);
             fd1.append('skipFailures', "true");
+            fd1.append('targetSrs', "EPSG:4326");
             $("#nameFile").text("Browse");
             var numberMap = $("#selectedMap")[0].value;
             var layerMap;
@@ -141,12 +142,16 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'bootstrapSlider', 'js/lib/
 
                     $("#loading").show();
                     $.ajax({
-                        url: 'http://ogre.adc4gis.com/convert',
+                       // url: 'http://ogre.adc4gis.com/convert',
+					    url:'http://localhost:8081/users/uploadMap',
                         data: fd1,
                         processData: false,
                         contentType: false,
                         type: 'POST',
                         success: function (data) {
+					        if(typeof(data) == "string"){
+					            data=JSON.parse(data);
+                            }
                             self.addJson(numberMap, data);
                             $("#loading").hide();
                         }

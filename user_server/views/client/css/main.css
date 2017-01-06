@@ -59,7 +59,9 @@ body {
     font-size: 20px;
     font-weight: bold;
 }
-
+#downloadButton{
+    display:none;
+}
 #messageContainer {
     position: absolute;
     z-index: 99999;

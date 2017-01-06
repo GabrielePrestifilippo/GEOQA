@@ -1,0 +1,209 @@
+doctype html
+html
+    head(lang='en')
+        meta(charset='UTF-8')
+        title GEOQA - Geomatics and Earth Observation Quality Assessment
+        script(src='js/lib/math.js', type='text/javascript')
+        script(data-main='main', src='js/lib/require.js')
+        link(rel='stylesheet', href='/leaflet/leaflet.css')
+        link(rel='stylesheet', href='css/font-awesome.min.css')
+        link(rel='stylesheet', href='css/bootstrap.min.css')
+        link(rel='stylesheet', href='css/bootstrap-switch.min.css')
+        link(rel='stylesheet', href='css/bootstrap-select.min.css')
+        link(rel='stylesheet', href='css/MarkerCluster.css')
+        link(rel='stylesheet', href='css/MarkerCluster.Default.css')
+        link(rel='stylesheet', href='css/bootstrap-slider.min.css')
+        link(rel='stylesheet', href='css/main.css')
+        link(href='https://fonts.googleapis.com/css?family=PT+Sans', rel='stylesheet')
+        link(href='https://fonts.googleapis.com/css?family=Oswald', rel='stylesheet')
+    body
+        #loading(style='display: none;')
+            img(src='images/loading.gif')
+        #menu
+            #buttons
+                #openShapeMenu.menuItem(style='border-color: #16d21b;')
+                    | New Map
+                    i.fa.fa-map.iconMap(aria-hidden='true')
+                #openParamMenu.menuItem(style='border-color: #e4ec25;')
+                    | Parameters
+                    i.fa.fa-wrench.iconMap(aria-hidden='true')
+                #findMenu.menuItem(style='border-color: #1fd9bf;')
+                    | Find Homologus
+                    i.fa.fa-search.iconMap(aria-hidden='true')
+                #sendMenu.menuItem(style='border-color: #d93a18;')
+                    | Run Program
+                    i.fa.fa-play.iconMap(aria-hidden='true')
+            br
+            #shapes
+                .btn-group(role='group', aria-label='...')
+                    .form-group
+                        select#selectedMap.form-control
+                            option(value='1', selected='selected') Map 1
+                            option(value='2') Map 2
+                    label#fileSelection.btn.btn-default.btn-file
+                        #nameFile Browse
+                        input#myFile1(type='file', style='display: none;', name='file')
+                    input#uploadFile.bigButton.btn.btn-default(type='button', value='Upload')
+                    input#sendOverpass.bigButton.btn.btn-default(type='button', value='Retrieve OSM')
+                .btn-group(role='group', aria-label='...')
+            #parameters.row
+                .input-group
+                    span.input-group-addon Angle
+                    input#angleParam.form-control(value='10', type='text', placeholder='Angle')
+                .input-group
+                    span.input-group-addon Sigma
+                    input#sigmaParam.form-control(value='3', type='text', placeholder='Sigma')
+                .input-group
+                    span.input-group-addon Maximum distance
+                    input#distanceParam.form-control(value='1', type='text', placeholder='Maximum distance')
+                .input-group
+                    span.input-group-addon Number of iterations
+                    input#iterationsParam.form-control(value='5', type='text', placeholder='Number of iterations')
+            #featuresMenu
+                .btn-group(role='group', aria-label='...')
+                    .form-group
+                        label.labelClass Associate Features
+                        br
+                        #groupAssociation
+                            .featuresAssociation
+                                select.selectpicker.dropDownFeatures.selectDropDownLeft
+                                    option(value='0', selected='selected') Select Attribute
+                                select.selectpicker.dropDownFeatures.selectDropDownRight
+                                    option(value='0', selected='selected') Select Attribute
+                                i.fa.fa-minus-circle.deleteAssociation(aria-hidden='true')
+                            br
+                        button#addAssociation.btn.btn-success(type='submit')
+                            i.fa.fa-plus-circle(aria-hidden='true')
+                            |  New Association
+                    br
+                    br
+                    input#getHomologus.bigButton.btn.btn-default(type='button', value='Find Points')
+                .btn-group(role='group', aria-label='...')
+        #banner
+            #openMenu
+                i.fa.fa-bars(style='font-size: 24px', aria-hidden='true')
+            #logo GEOQA - Geomatics and Earth Observation Quality Assessment
+        #messageContainer(style='display: none; opacity: 0;') Selection performed
+        #page
+            #map1
+                #m1List
+                #buttonM1 Markers
+            #map2
+                #m2List
+                #buttonM2 Markers
+            #resultMap
+                #buttonOpacity Opacity
+                #opacityList
+                    label Map 1
+                    input.rangeSliderOpacity.span2(map='0', type='text', value='50', data-slider-min='10', data-slider-max='100', data-slider-step='5', data-slider-value='0')
+                    label Map 2
+                    input.rangeSliderOpacity.span2(map='1', type='text', value='50', data-slider-min='10', data-slider-max='100', data-slider-step='5', data-slider-value='0')
+                    label Result Map
+                    input.rangeSliderOpacity.span2(map='2', type='text', value='50', data-slider-min='10', data-slider-max='100', data-slider-step='5', data-slider-value='100')
+            #resultData.row
+                .input-group
+                    span.input-group-addon Mean Delta X
+                    input#mediaDeltaX.form-control(type='text', disabled='')
+                .input-group
+                    span.input-group-addon Delta X Variance
+                    input#varianzaDeltaX.form-control(type='text', disabled='')
+                .input-group
+                    span.input-group-addon Mean Delta Y
+                    input#mediaDeltaY.form-control(type='text', disabled='')
+                .input-group
+                    span.input-group-addon Mean Distances
+                    input#mediaDistanze.form-control(type='text', disabled='')
+                .input-group
+                    span.input-group-addon Distances Variance
+                    input#varianzaDistanze.form-control(type='text', disabled='')
+                .input-group
+                    span.input-group-addon Min Distance
+                    input#distanzaMinima.form-control(type='text', disabled='')
+                .input-group
+                    span.input-group-addon Max Distance
+                    input#distanzaMassima.form-control(type='text', disabled='')
+                br
+                button#downloadButton.btn.btn-success(type='submit')
+                    | Download Result Map
+        #mapAfterControls
+            #controlLeft
+                label(style='float: left; line-height: 50px;', ;='')
+                    | Synchronize Maps
+                input#sync1(type='checkbox', data-size='small')
+        #instructions
+            h2 What is GEOQA
+            br
+            p
+                | GEOQA - Geomatics and Earth Observation Quality Assessment - is a tool to compare two vector maps and warp a
+                | first map into a second one.
+                br
+                |         It allows to upload two shapefiles and then select some homologous points in order to perform the warping
+                |         and retrieve the differences.
+            h2 How to use the application
+            br
+            p
+                li Upload a map
+            p
+                | The first required step is to upload a new shapefile containing some buildings.
+                br
+                |         To do so, open the left side menu from the menu button  
+                i.fa.fa-bars(style='font-size: 24px', aria-hidden='true')
+                br
+                |         Select "New Map" and select in which map you want to upload the shapefile (map 1 or map 2).
+                br
+                |         Then Browse your computer for a .zip file containing the shapefile components and press Upload.
+                br
+                |         You will be now required to upload another map. However, you can retrieve the shapes from
+                |         OpenStreetMap.
+                br
+                |         To retieve the shapes from OpenStreetMap, select an area in the interested map, by holding the SHIFT key
+                |         and dragging the mouse pointer over the interested area.
+                br
+                |         When the selection is performed you can click on "Retrieve OSM" to download the data from OpenStreetMap.
+            br
+            li Select Pair
+            p
+                | In order to perform the warping on the two maps, you are required to select few corresponding point in both
+                | maps.
+                br
+                |         To do so, select first a point in a map, then select the corresponding point in the other map.
+                br
+                |         If by mistake you select a wrong point you can delete it by clicking on it and removing it.
+                br
+                |         A minimum of 5 homologous points is required to perform the transformation.
+            br
+            li Retrive homologous points
+            p
+                | On the left menu, a sub-menu to retrieve the homologous points is available.
+                br
+                |         Select it and click on Find Points.
+                br
+                |         The application will retrieve a list of homologous points that you can edit, along with some statistics
+                |         If you are interested in creating association among attributes of the first and second map, you can select on
+                |         the "Associate Features" dropdown menu the attributes you want to associate
+                br
+            br
+            li Set Parameters
+            p
+                | To execute the program you can select few parameters:
+                | Angle: .....
+                br
+                |         Sigma: .....
+                br
+                |         Maximum Distance: .....
+                br
+                |         Number of Iterations: .....
+                br
+            br
+            li Run the program
+            p
+                | If everything is set up correctly, and all the homologous points are set, you can run the program by clicking
+                | the "Run the program" button.
+            br
+        #footer
+            | Website developed by
+            a(href='http://geolab.como.polimi.it/') GeoLab Como
+            br
+            |     Contact Developer
+            a(href='mailto:gabriele.prestifilippo@polimi.it') Gabriele Prestifilippo
+        script.

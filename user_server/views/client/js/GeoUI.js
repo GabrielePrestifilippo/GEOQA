@@ -6,6 +6,7 @@ define([], function () {
          * Insert the name of the selected file on the button
          */
         $("#myFile1").on('change', function () {
+            if(document.getElementById('myFile1').files[0])
             $("#nameFile").html(document.getElementById('myFile1').files[0].name);
         });
 
