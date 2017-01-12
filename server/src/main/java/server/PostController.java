@@ -58,20 +58,20 @@ public class PostController {
 	@CrossOrigin
 	@RequestMapping(value = "getHomologus", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<String> getHomologus(
-
 			@RequestParam("layer1") MultipartFile layer1, @RequestParam("layer2") MultipartFile layer2,
 			@RequestParam("points1") MultipartFile points1, @RequestParam("points2") MultipartFile points2,
 			@RequestParam(value = "angolo", required = false) Double angolo,
 			@RequestParam(value = "sigma", required = false) Double sigma,
 			@RequestParam(value = "distanza", required = false) Double distanza,
-			@RequestParam(value = "iterazioni", required = false) Integer iterazioni,
-			@RequestParam(value = "attributes", required = false) List<String> attributes
+			@RequestParam(value = "iterazioni", required = false) Integer iterazioni//,
+			//@RequestParam(value = "attributes", required = false) List<String> attributes
 	) throws IOException {
+		
 		SoftwareMain test = new SoftwareMain();
 		test.setParams(angolo, sigma, distanza, iterazioni);
 		test.setSource(layer1.getBytes(),points1.getBytes());
 		test.setTarget(layer2.getBytes(),points2.getBytes());
-		
+		/*
 		TabellaRelazioneLivelli tabellaRelazioneLivelli=null;
 		if(attributes!=null){
 			tabellaRelazioneLivelli=new TabellaRelazioneLivelli();
@@ -80,8 +80,9 @@ public class PostController {
 			}
 		}
 		test.setTabellaRelazioneLivelli(tabellaRelazioneLivelli);
+		*/
 		String result = test.getHomologus();
-		System.out.println("Res ready");
+		
 		return ResponseEntity.ok().body(result);
 	}
 
