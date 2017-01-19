@@ -41,7 +41,7 @@ var geo; //debugging variable to access all the methods from the console
 /**
  * Main method that creates the UI and the core of the program GEOQA
  */
-define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'bootstrapSlider', 'js/lib/bootbox.min'],
+define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'bootstrapSlider', 'js/lib/bootbox.min', 'config'],
     function (GEOQA, $, L, GeoUI, slider, bootbox) {
         this.UI = new GeoUI();
         var self = new GEOQA(this.UI);
@@ -68,9 +68,109 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'bootstrapSlider', 'js/lib/
          * All the click listener for the events related to the UI and the main functionalities
          */
 
+
+        $('#importFile').click(function () {
+
+            self.UI.closeMenu();
+            var selectLayers = $(".selectDropDownLayers");
+            var numberMap = $("#selectedMap")[0].value;
+            var selected = selectLayers.find("option:selected").text();
+
+            var url = 'http://131.175.143.51/geoserver/wfs?srsName=EPSG%3A4326&typename=geonode%3A'+selected+'&outputFormat=text/javascript&version=1.0.0&service=WFS&request=GetFeature';
+            var layerMap;
+            if (self.map1.over._layers.length > 1 && numberMap == String(1)) {
+                bootbox.confirm({
+                    title: "Attention!",
+                    message: "You have already uploaded a shape on the 1st map",
+                    buttons: {
+                        cancel: {
+                            label: '<i class="fa fa-times"></i> Go back'
+                        },
+                        confirm: {
+                            label: '<i class="fa fa-check"></i> Delete old shape and reset markers'
+                        }
+                    },
+                    callback: function (result) {
+                        continueAdd(result);
+                    }
+
+                });
+            } else if (self.map2.over._layers.length > 1 && numberMap == String(2)) {
+                bootbox.confirm({
+                    title: "Attention!",
+                    message: "You have already uploaded a shape on the 2nd map",
+                    buttons: {
+                        cancel: {
+                            label: '<i class="fa fa-times"></i> Go back'
+                        },
+                        confirm: {
+                            label: '<i class="fa fa-check"></i> Delete old shape and reset markers'
+                        }
+                    },
+                    callback: function (result) {
+                        continueAdd(result);
+                    }
+
+                });
+            } else {
+                continueAdd(true);
+            }
+            function continueAdd(result) {
+                if (result == true) {
+                    self.helper.cleanAllMarkers();
+                    var overMap;
+                    if (numberMap == "1") {
+                        layerMap = self.lMap1;
+                        numberMap = self.map1;
+                        overMap = self.map1.over;
+                    } else {
+                        layerMap = self.lMap2;
+                        numberMap = self.map2;
+                        overMap = self.map2.over;
+                    }
+
+                    if (layerMap) {
+                        numberMap.removeLayer(layerMap);
+                        overMap.removeLayer(layerMap);
+                    }
+
+                    $("#loading").show();
+                    var rootUrl = 'http://131.175.143.51/geoserver/wms';
+                    var defaultParameters = {
+                        service: 'WMS',
+                        layers: 'geonode:'+selected,
+                        format:'image/png',
+                        tiled:true
+
+
+                    };
+                    var wmsLayer = L.tileLayer.wms(rootUrl, defaultParameters);
+                    wmsLayer.setOpacity(0.65);
+                    numberMap.isWms=true;
+                    numberMap.wms=wmsLayer;
+                    $.ajax({
+                        url: url,
+                        dataType: "jsonp",
+                        jsonpCallback: 'parseResponse',
+                        type: 'GET',
+                        success: function (data) {
+                            self.addJson(numberMap, data, wmsLayer);
+                            $("#loading").hide();
+                        }
+                    });
+
+
+
+
+                }
+            }
+
+        });
+
         /**
          * Upload button to upload the map from the client
          */
+
         $('#uploadFile').click(function () {
             self.UI.closeMenu();
             $('#browseButton').click();
@@ -140,7 +240,7 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'bootstrapSlider', 'js/lib/
 
                     $("#loading").show();
                     $.ajax({
-                        url: 'http://ogre.adc4gis.com/convert',
+                        url: CONFIG.OGRE,
                         data: fd1,
                         processData: false,
                         contentType: false,
@@ -160,7 +260,15 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'bootstrapSlider', 'js/lib/
         $("#sendOverpass").click(function () {
             self.UI.closeMenu();
             var numberMap = $("#selectedMap")[0].value;
-            var tag = $("#osmTag").val();
+            var len = $(".osmTag").length;
+
+           var tags=[];
+            for(var x=0; x<len;x++){
+                tags.push($(".osmTag")[x].value);
+           }
+
+            console.log(tags);
+
             var messageNumber;
             if (self.map1.over._layers.length > 1 && numberMap == String(1)) {
                 messageNumber = "1st";
@@ -169,11 +277,7 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'bootstrapSlider', 'js/lib/
             } else {
                 continueAdd(true);
             }
-            if (tag.split(" ").length > 1 || tag.split(";").length > 1) {
-                bootbox.alert("Max one tag per time", function () {
-                });
-                return;
-            }
+
             if (messageNumber) {
                 bootbox.confirm({
                     title: "Attention!",
@@ -193,10 +297,10 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'bootstrapSlider', 'js/lib/
 
             }
             function continueAdd(result) {
-                self.helper.cleanAllMarkers();
-                var numberMap = $("#selectedMap")[0].value;
-                var layerMap, mapToUse, overMap, bbox;
                 if (result == true) {
+                    self.helper.cleanAllMarkers();
+                    var numberMap = $("#selectedMap")[0].value;
+                    var layerMap, mapToUse, overMap, bbox;
                     if (numberMap == "1") {
                         layerMap = self.lMap1;
                         mapToUse = self.map1;
@@ -221,7 +325,7 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'bootstrapSlider', 'js/lib/
                     }
 
                     $("#loading").show();
-                    self.overPass(bbox, mapToUse, tag);
+                    self.overPass(bbox, mapToUse, tags);
                 }
             }
         });

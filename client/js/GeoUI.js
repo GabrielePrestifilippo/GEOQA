@@ -1,4 +1,4 @@
-define([], function () {
+define(['jquery'], function ($) {
 
     var GeoUI = function () {
         var self = this;
@@ -28,8 +28,9 @@ define([], function () {
             var open = $("#shapes").prop("open");
             self.closeAllMenu();
             if (!open) {
-                $("#shapes").css("max-height", "500px");
                 $("#shapes").prop("open", true);
+                $("#shapes").css("min-height", "100vh");
+                $("#shapes").css("max-height", "1000px");
             }
         });
 
@@ -110,6 +111,24 @@ define([], function () {
         });
 
         /**
+         * Clone a new tag menu to insert a new tag
+         */
+        $("#addTag").click(function () {
+            var btn = $(".featuresTag:last").clone();
+            btn.appendTo("#groupTag");
+            var select = btn.find('select');
+            btn.find('.bootstrap-select').remove();
+
+            btn.prepend(select);
+            btn.find('select').selectpicker();
+
+
+            btn.children()[1].addEventListener("click", function () {
+                $(this).parent().remove();
+            })
+        });
+
+        /**
          * Clone a new association menu to insert a new association
          */
         $("#addAssociation").click(function () {
@@ -127,7 +146,7 @@ define([], function () {
             })
         });
 
-
+        this.fillLayersList();
     };
 
     /**
@@ -143,6 +162,7 @@ define([], function () {
      */
     GeoUI.prototype.closeAllMenu = function () {
         $("#shapes").css("max-height", "0px");
+        $("#shapes").css("min-height", "0px");
         $("#shapes").prop("open", false);
         $("#parameters").css("max-height", "0px");
         $("#parameters").prop("open", false);
@@ -205,7 +225,7 @@ define([], function () {
         }
         var group = "";
         for (var key in prop) {
-            if (prop.hasOwnProperty(key) && key !== "id" && key!="@id") {
+            if (prop.hasOwnProperty(key) && key !== "id" && key != "@id") {
                 group += "<optgroup label='" + key + "'>";
                 var listOfVal = [];
                 prop[key].forEach(function (val) {
@@ -239,6 +259,58 @@ define([], function () {
             selectMenu.find('select').append(group);
         }
         selectMenu.selectpicker('refresh');
+
+    };
+
+    GeoUI.prototype.fillLayersList = function () {
+
+        var selectUsers = $(".selectDropDownUsers");
+        var selectLayers = $(".selectDropDownLayers");
+        selectUsers.selectpicker();
+
+
+
+        $.ajax({
+            url: "http://131.175.143.51/api/profiles/",
+            dataType: "jsonp",
+            jsonpCallback: 'callback',
+            type: 'GET',
+            success: function (data) {
+                var group = "";
+                var names = Object.keys(data.objects).map(name => data.objects[name].username);
+                names.forEach(function (name) {
+
+                    group += "<option>" + name + "</option>";
+
+                });
+                selectUsers.append(group);
+                selectUsers.selectpicker('refresh');
+            }
+        });
+
+        selectUsers.on("change",function(e){
+            var selectedUser = $(this).find("option:selected").text();
+            $.ajax({
+                url: "http://131.175.143.51/api/layers/?owner__username="+selectedUser,
+                dataType: "jsonp",
+                jsonpCallback: 'callback',
+                type: 'GET',
+                success: function (data) {
+                    var group = "";
+                    var titles = Object.keys(data.objects).map(title => data.objects[title].title);
+                    var url = Object.keys(data.objects).map(title => data.objects[title].detail_url);
+                    titles.forEach(function (title,i) {
+                        group += "<option value='"+url[i]+"'>" + title + "</option>";
+                    });
+                    selectLayers.html(group);
+                    selectLayers.attr('disabled', false);
+                    selectLayers.selectpicker('refresh');
+                }
+            });
+        });
+
+
+
 
     };
 

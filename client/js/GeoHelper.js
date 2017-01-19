@@ -155,6 +155,19 @@ define(['js/lib/bootbox.min'], function (bootbox) {
             }
         });
     };
+
+    GeoHelper.prototype.pushCoords = function (coords){
+        var allCoords=[];
+       for(var x=0;x<coords.length;x++){
+            if (typeof(coords[x][0]) == "object") {
+                allCoords=allCoords.concat(this.pushCoords(coords[x]));
+            } else {
+                allCoords.push(coords[x]);
+
+            }
+        }
+        return allCoords;
+    };
     GeoHelper.prototype.addMarkerToInterface = function (tempMarker, markerNum, map) {
         var mapNumber = map.split("map")[1];
 

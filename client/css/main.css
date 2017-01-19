@@ -101,10 +101,16 @@ span.input-group-addon {
     padding-left: 5px;
     padding-right: 5px;
     overflow: auto;
+
 }
 
 .bootstrap-select.btn-group .dropdown-menu li a.opt {
     padding-left: 1em;
+}
+
+.tagMultiple{
+    width:94%;
+    float:left;
 }
 
 .labelClass {

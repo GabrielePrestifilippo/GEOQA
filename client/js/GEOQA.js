@@ -11,7 +11,8 @@ define([
     'leaflet-areaselect',
     'leaflet-MapSync',
     'bootstrapSwitch',
-    'js/transformation'
+    'js/transformation',
+    'config'
 
 
 ], function ($, bootstrap, osmtogeojson, L, GeoHelper, LeafletVectorGridbundled, proj4) {
@@ -43,27 +44,8 @@ define([
         var self = this;
 
         //Temporary maps
+        // CONFIG.STARTUP(self);
 
-        setTimeout(function () {
-            $.ajax({
-                // url: 'osm.geojson',
-                url: 'map2.geojson',
-                type: 'POST',
-                success: function (data) {
-                    self.addJson(self.map1, data);
-                }
-            });
-
-            $.ajax({
-                // url: 'dbtr.geojson',
-                url: 'map1.geojson',
-                type: 'POST',
-                success: function (data) {
-                    self.addJson(self.map2, data);
-                }
-            });
-
-        }, 2000)
 
     };
 
@@ -139,8 +121,7 @@ define([
 
         var promise = new Promise(function (resolve) {
             $.ajax({
-                url: "http://localhost:8080/getHomologus",
-                // url: "http://131.175.143.84/geo/getHomologus",
+                url: CONFIG.homologousURL,
                 type: "POST",
                 data: formData,
                 enctype: 'multipart/form-data',
@@ -261,9 +242,13 @@ define([
         var letterType;
         //for each feature of the json
         jsonData.features.forEach(function (features, index) {
+            if (!features.geometry || !features.geometry.type) {
+                return;
+            }
             arrayList[index] = [];
             arrayList[index].myProp = type; //assign a properties to each feature, initialize it to a number (0,1->map0, map1)
-            if (features.geometry.type == "Polygon") {
+
+            if (features.geometry.type == "Polygon" || features.geometry.type == "MultiPolygon") {
                 letterType = "A";
             } else {
                 letterType = "L";
@@ -300,13 +285,15 @@ define([
         //we fill the car file, by putting the extent in the first line
         var carString = jsonData.extent;
         arrayList.forEach(function (feature) {
-            //for each coordinate we put a new line with A coordinates
-            carString += "\n" + feature.letterType + " " + feature.myProp;
-            feature.forEach(function (coords) {
-                //we convert the coordinates into 32632
-                var res = proj4('WGS84', self.projection, [coords[0], coords[1]]);
-                carString += "\n" + res[0] + " " + res[1] + " 0";
-            })
+            if (feature.length) {
+                //for each coordinate we put a new line with A coordinates
+                carString += "\n" + feature.letterType + " " + feature.myProp;
+                feature.forEach(function (coords) {
+                    //we convert the coordinates into 32632
+                    var res = proj4('WGS84', self.projection, [coords[0], coords[1]]);
+                    carString += "\n" + res[0] + " " + res[1] + " 0";
+                })
+            }
         });
 
         return carString;
@@ -413,12 +400,11 @@ define([
         formData.append('distanza', distanceParam);
         formData.append('iterazioni', iterationsParam);
         if (attributes.length) {
-            //  formData.append('attributes', attributes);
+            formData.append('attributes', attributes);
         }
         var promise = new Promise(function (resolve) {
             $.ajax({
-                url: "http://localhost:8080/send",
-                // url: "http://131.175.143.84/geo/send",
+                url: CONFIG.getMapURL,
                 type: "POST",
                 data: formData,
                 enctype: 'multipart/form-data',
@@ -480,49 +466,60 @@ define([
             resultMap = L.map('resultMap', {center: [45.82789, 9.07617], zoom: 5, minZoom: 4});
             resultMap.addLayer(omsMap3);
             this.resultMap = resultMap;
-            map1 = L.vectorGrid.slicer(this.jsonMap1, {
-                rendererFactory: L.canvas.tile,
-                maxZoom: 25,
-                maxNativeZoom: 18,
-                vectorTileLayerStyles: {
-                    sliced: function (properties, zoom) {
-                        return {
-                            fillColor: '#66ff66',
-                            fillOpacity: 0.65,
-                            stroke: true,
-                            fill: true,
-                            color: 'red',
-                            strokeOpacity: 2,
-                            weight: 4
+            if (this.map1.isWms) {
+                map1 = this.map1.wms;
+            } else {
+                map1 = L.vectorGrid.slicer(this.jsonMap1, {
+                    rendererFactory: L.canvas.tile,
+                    maxZoom: 25,
+                    maxNativeZoom: 18,
+                    vectorTileLayerStyles: {
+                        sliced: function (properties, zoom) {
+                            return {
+                                fillColor: '#66ff66',
+                                fillOpacity: 0.65,
+                                stroke: true,
+                                fill: true,
+                                color: 'red',
+                                strokeOpacity: 2,
+                                weight: 4
+                            }
                         }
+                    },
+                    interactive: true,
+                    getFeatureId: function (f) {
                     }
-                },
-                interactive: true,
-                getFeatureId: function (f) {
-                }
-            }).addTo(resultMap);
-            map2 = L.vectorGrid.slicer(this.jsonMap2, {
-                rendererFactory: L.canvas.tile,
-                maxZoom: 25,
-                maxNativeZoom: 18,
-                vectorTileLayerStyles: {
-                    sliced: function (properties, zoom) {
-                        var line = properties.highway;
-                        return {
-                            fillColor: '#ff9966',
-                            fillOpacity: 0.65,
-                            stroke: line ? true : false,
-                            fill: true,
-                            color: 'red',
-                            strokeOpacity: line ? 2 : 0,
-                            weight: line ? 4 : 0
+                })
+            }
+            map1.addTo(resultMap);
+
+            if (this.map2.isWms) {
+                map2 = this.map2.wms;
+            } else {
+                map2 = L.vectorGrid.slicer(this.jsonMap2, {
+                    rendererFactory: L.canvas.tile,
+                    maxZoom: 25,
+                    maxNativeZoom: 18,
+                    vectorTileLayerStyles: {
+                        sliced: function (properties, zoom) {
+                            var line = properties.highway;
+                            return {
+                                fillColor: '#ff9966',
+                                fillOpacity: 0.65,
+                                stroke: line ? true : false,
+                                fill: true,
+                                color: 'red',
+                                strokeOpacity: line ? 2 : 0,
+                                weight: line ? 4 : 0
+                            }
                         }
+                    },
+                    interactive: true,
+                    getFeatureId: function (f) {
                     }
-                },
-                interactive: true,
-                getFeatureId: function (f) {
-                }
-            }).addTo(resultMap);
+                });
+            }
+            map2.addTo(resultMap);
             var base = {
                 "Base Map": omsMap3
             };
@@ -589,42 +586,44 @@ define([
         $("#loading").hide();
     };
 
+
     /**
      * Add a JSON file to the map
      * @param map, map in which to insert the layer
      * @param data, JSON data to be inserted
      */
-    GEOQA.prototype.addJson = function (map, data) {
+    GEOQA.prototype.addJson = function (map, data, vectorGrid) {
 
         if (data.features.length == 0)
             return;
 
         var self = this;
 
-
-        var vectorGrid = L.vectorGrid.slicer(data, {
-            rendererFactory: L.canvas.tile,
-            maxZoom: 25, maxNativeZoom: 18,
-            vectorTileLayerStyles: {
-                sliced: function (properties, zoom) {
-                    var line = properties.highway;
-                    return {
-                        fillColor: '#ff8f00',
-                        fillOpacity: 0.65,
-                        stroke: line ? true : false,
-                        fill: true,
-                        color: 'red',
-                        strokeOpacity: line ? 2 : 0,
-                        weight: line ? 4 : 0
+        if (!vectorGrid) {
+            var vectorGrid = L.vectorGrid.slicer(data, {
+                rendererFactory: L.canvas.tile,
+                maxZoom: 25, maxNativeZoom: 18,
+                vectorTileLayerStyles: {
+                    sliced: function (properties, zoom) {
+                        var line = properties.highway;
+                        return {
+                            fillColor: '#ff8f00',
+                            fillOpacity: 0.65,
+                            stroke: line ? true : false,
+                            fill: true,
+                            color: 'red',
+                            strokeOpacity: line ? 2 : 0,
+                            weight: line ? 4 : 0
+                        }
                     }
+                },
+                interactive: true,
+                getFeatureId: function (f) {
                 }
-            },
-            interactive: true,
-            getFeatureId: function (f) {
-            }
-        }).addTo(map);
-
-        var temp = L.geoJson(data)//.addTo(map);
+            })
+        }
+        vectorGrid.addTo(map);
+        var temp = L.geoJson(data);
 
         if (map._container.id == "map1") {
             this.jsonMap1 = data;
@@ -636,16 +635,12 @@ define([
             this.UI.addPropToMenu(1, this.jsonMap1.prop);
             var allCoords = [];
             data.features.forEach(function (f) {
-                f.geometry.coordinates.forEach(function (coords) {
-                    if (typeof(coords[0]) == "object") {
-                        coords.forEach(function (c) {
-                            allCoords.push(c);
-                        });
-                    } else {
-                        allCoords.push(coords);
-                    }
-                })
+                if (f.geometry && f.geometry.coordinates && f.geometry.coordinates.length > 0)
+                    allCoords = allCoords.concat(self.helper.pushCoords(f.geometry.coordinates));
+
             });
+
+
             this.jsonMap1.coords = allCoords;
 
         } else {
@@ -658,15 +653,9 @@ define([
             this.UI.addPropToMenu(2, this.jsonMap2.prop);
             var allCoords = [];
             data.features.forEach(function (f) {
-                f.geometry.coordinates.forEach(function (coords) {
-                    if (typeof(coords[0]) == "object") {
-                        coords.forEach(function (c) {
-                            allCoords.push(c);
-                        });
-                    } else {
-                        allCoords.push(coords);
-                    }
-                })
+                if (f.geometry && f.geometry.coordinates && f.geometry.coordinates.length > 0)
+                    allCoords = allCoords.concat(self.helper.pushCoords(f.geometry.coordinates));
+
             });
             this.jsonMap2.coords = allCoords;
         }
@@ -810,20 +799,33 @@ define([
      * Retrieve Buildings from Overpass and insert into a map
      * @param numberMap
      */
-    GEOQA.prototype.overPass = function (bbox, map, tag) {
+    GEOQA.prototype.overPass = function (bbox, map, tags) {
 
 
-        var data = '[out:json][timeout:25];(way["' + tag + '"](' + bbox + ');relation["' + tag + '"](' + bbox + '););out ;>;out skel qt;';
+        var data = `[out:json][timeout:25];(`;
+
+        for(var x=0; x<tags.length;x++){
+            data+=`way[`+tags[x]+`](` + bbox + `);
+                  relation[`+tags[x]+`](` + bbox + `);`
+        }
+          data+=`);out ;>;out skel qt;`;
+
+
         var self = this;
         $.ajax({
-            url: 'http://overpass-api.de/api/interpreter',
+            url: CONFIG.OVERPASS,
             data: data,
             processData: false,
             contentType: false,
             type: 'POST',
             success: function (data) {
+                if (data.elements.length<1){
+                    $("#loading").hide();
+                    self.UI.successMessage("No features found. Try to extend the selection or add new tags");
+                     return;
+                }
                 data = osmtogeojson(data);
-
+    
                 self.addJson(map, data);
             },
             error: function (e) {
