@@ -76,7 +76,7 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'bootstrapSlider', 'js/lib/
             var numberMap = $("#selectedMap")[0].value;
             var selected = selectLayers.find("option:selected").text();
 
-            var url = 'http://131.175.143.51/geoserver/wfs?srsName=EPSG%3A4326&typename=geonode%3A'+selected+'&outputFormat=text/javascript&version=1.0.0&service=WFS&request=GetFeature';
+            var url = CONFIG.GEOSERVER + 'wfs?srsName=EPSG%3A4326&typename=geonode%3A' + selected + '&outputFormat=text/javascript&version=1.0.0&service=WFS&request=GetFeature';
             var layerMap;
             if (self.map1.over._layers.length > 1 && numberMap == String(1)) {
                 bootbox.confirm({
@@ -135,31 +135,42 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'bootstrapSlider', 'js/lib/
                     }
 
                     $("#loading").show();
-                    var rootUrl = 'http://131.175.143.51/geoserver/wms';
+                    var rootUrl = CONFIG.GEOSERVER + 'wms';
                     var defaultParameters = {
                         service: 'WMS',
-                        layers: 'geonode:'+selected,
-                        format:'image/png',
-                        tiled:true
-
-
+                        layers: 'geonode:' + selected,
+                        format: 'image/png',
+                        transparent: true,
+                        tiled: true,
+                        maxZoom: 25,
+                        maxNativeZoom: 25
                     };
+
+            
+                        $.ajax({
+                            url: url,
+                            dataType: "jsonp",
+                            jsonpCallback: 'parseResponse',
+                            type: 'GET',
+                            success: function (data) {
+                                $("#loading").hide();
+                                self.addJson(numberMap, data, wmsLayer);
+
+                            },
+                            error: function () {
+                                $("#loading").hide();
+                                bootbox.alert("The selected layer is not supported (is it a vector?)", function () {
+                                });
+                            }
+                        });
+              
+
+              
+                    
                     var wmsLayer = L.tileLayer.wms(rootUrl, defaultParameters);
                     wmsLayer.setOpacity(0.65);
-                    numberMap.isWms=true;
-                    numberMap.wms=wmsLayer;
-                    $.ajax({
-                        url: url,
-                        dataType: "jsonp",
-                        jsonpCallback: 'parseResponse',
-                        type: 'GET',
-                        success: function (data) {
-                            self.addJson(numberMap, data, wmsLayer);
-                            $("#loading").hide();
-                        }
-                    });
-
-
+                    numberMap.isWms = true;
+                    numberMap.wms = {url: rootUrl, param: defaultParameters};
 
 
                 }
@@ -262,12 +273,11 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'bootstrapSlider', 'js/lib/
             var numberMap = $("#selectedMap")[0].value;
             var len = $(".osmTag").length;
 
-           var tags=[];
-            for(var x=0; x<len;x++){
+            var tags = [];
+            for (var x = 0; x < len; x++) {
                 tags.push($(".osmTag")[x].value);
-           }
+            }
 
-            console.log(tags);
 
             var messageNumber;
             if (self.map1.over._layers.length > 1 && numberMap == String(1)) {

@@ -165,19 +165,22 @@ define([
 
 
                 var allCoords1 = [];
-                self.jsonMap1.features.forEach(function (f) {
-                    f.geometry.coordinates.forEach(function (coords) {
-                        coords.forEach(function (c) {
-                            allCoords1.push(c);
-                        })
-                    })
-                });
+
+            self.jsonMap1.features.forEach(function (f) {
+                if (f.geometry && f.geometry.coordinates && f.geometry.coordinates.length > 0)
+                    allCoords1 = allCoords1.concat(self.helper.pushCoords(f.geometry.coordinates));
+
+            });
+
+               
+        
                 var allCoords2 = [];
                 self.jsonMap2.features.forEach(function (f) {
-                    f.geometry.coordinates[0].forEach(function (coords) {
-                        allCoords2.push(coords);
-                    })
-                });
+                if (f.geometry && f.geometry.coordinates && f.geometry.coordinates.length > 0)
+                    allCoords2 = allCoords2.concat(self.helper.pushCoords(f.geometry.coordinates));
+
+            });
+
 
                 markerLeaflet1.forEach(function (marker, i) {
                     var min = Infinity;
@@ -467,7 +470,8 @@ define([
             resultMap.addLayer(omsMap3);
             this.resultMap = resultMap;
             if (this.map1.isWms) {
-                map1 = this.map1.wms;
+                var wmsLayer = L.tileLayer.wms(this.map1.wms.url, this.map1.wms.param);
+                map1 = wmsLayer;
             } else {
                 map1 = L.vectorGrid.slicer(this.jsonMap1, {
                     rendererFactory: L.canvas.tile,
@@ -494,7 +498,8 @@ define([
             map1.addTo(resultMap);
 
             if (this.map2.isWms) {
-                map2 = this.map2.wms;
+                var wmsLayer = L.tileLayer.wms(this.map2.wms.url, this.map2.wms.param);
+                map2 = wmsLayer;
             } else {
                 map2 = L.vectorGrid.slicer(this.jsonMap2, {
                     rendererFactory: L.canvas.tile,
@@ -530,6 +535,8 @@ define([
             map2.setOpacity(0);
             over.addOverlay(map1, "Map 1");
             over.addOverlay(map2, "Map 2");
+           // resultMap.removeLayer(map1);
+           // resultMap.removeLayer(map2);
 
             this.resultMap.cluster = L.markerClusterGroup({
                 disableClusteringAtZoom: 18
@@ -556,15 +563,14 @@ define([
             maxNativeZoom: 18,
             vectorTileLayerStyles: {
                 sliced: function (properties, zoom) {
-                    var line = properties.highway;
                     return {
-                        fillColor: '#bf174e',
+                        fillColor: '#bf1c2f',
                         fillOpacity: 0.65,
                         stroke: true,
                         fill: true,
                         color: 'red',
-                        strokeOpacity: 2,
-                        weight: 4
+                        strokeOpacity: 0.5,
+                        weight: 2
                     }
                 }
             },

@@ -225,7 +225,7 @@ define(['jquery'], function ($) {
         }
         var group = "";
         for (var key in prop) {
-            if (prop.hasOwnProperty(key) && key !== "id" && key != "@id") {
+            if (prop.hasOwnProperty(key) && key !== "id" && key != "@id" && key != "id_1") {
                 group += "<optgroup label='" + key + "'>";
                 var listOfVal = [];
                 prop[key].forEach(function (val) {
@@ -267,11 +267,11 @@ define(['jquery'], function ($) {
         var selectUsers = $(".selectDropDownUsers");
         var selectLayers = $(".selectDropDownLayers");
         selectUsers.selectpicker();
-
+        selectLayers.selectpicker();
 
 
         $.ajax({
-            url: "http://131.175.143.51/api/profiles/",
+            url: CONFIG.GEONODE+"api/profiles/",
             dataType: "jsonp",
             jsonpCallback: 'callback',
             type: 'GET',
@@ -291,7 +291,7 @@ define(['jquery'], function ($) {
         selectUsers.on("change",function(e){
             var selectedUser = $(this).find("option:selected").text();
             $.ajax({
-                url: "http://131.175.143.51/api/layers/?owner__username="+selectedUser,
+                url: CONFIG.GEONODE+"/api/layers/?owner__username="+selectedUser,
                 dataType: "jsonp",
                 jsonpCallback: 'callback',
                 type: 'GET',

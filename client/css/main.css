@@ -51,6 +51,10 @@ body {
     position: relative;
 }
 
+.dropdown-menu.open {
+    text-overflow: ellipsis;
+}
+
 .number-icon {
     /*  background-image: url("../images/Map-icon.png");*/
     background-color: rgba(0, 0, 0, 0);
