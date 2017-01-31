@@ -147,12 +147,6 @@ define(['js/lib/bootbox.min'], function (bootbox) {
                     });
                 }
             }
-            if (mainMarkers.markers.length <= 3 || oppositeMarkers.markers.length <= 3) {
-                if (!$("#sync1").bootstrapSwitch("state") && !$("#sync1").bootstrapSwitch("disabled")) {
-                    $("#sync1").bootstrapSwitch("toggleDisabled");
-                }
-
-            }
         });
     };
 
@@ -162,6 +156,8 @@ define(['js/lib/bootbox.min'], function (bootbox) {
             if (typeof(coords[x][0]) == "object") {
                 allCoords=allCoords.concat(this.pushCoords(coords[x]));
             } else {
+                coords[x][0]=Math.round(coords[x][0]*1000000)/1000000; //to remove?
+                coords[x][1]=Math.round(coords[x][1]*1000000)/1000000; //to remove?
                 allCoords.push(coords[x]);
 
             }

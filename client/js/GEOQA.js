@@ -6,6 +6,8 @@ define([
     'js/GeoHelper',
     'leaflet-vector',
     'js/proj4',
+    'js/lib/bootbox.min',
+    'js/QuadTree',
     'leaflet-marker',
     'bootstrap-select',
     'leaflet-areaselect',
@@ -15,7 +17,7 @@ define([
     'config'
 
 
-], function ($, bootstrap, osmtogeojson, L, GeoHelper, LeafletVectorGridbundled, proj4) {
+], function ($, bootstrap, osmtogeojson, L, GeoHelper, LeafletVectorGridbundled, proj4, bootbox) {
     var GEOQA = function (UI) {
         this.markers1 = {
             markers: [],
@@ -44,7 +46,7 @@ define([
         var self = this;
 
         //Temporary maps
-        // CONFIG.STARTUP(self);
+        //CONFIG.STARTUP(self);
 
 
     };
@@ -138,85 +140,124 @@ define([
         });
 
         promise.then(function (res) {
-                var resultParam = res.statistics.split("\n")[1].split(";");
-                self.UI.showStatistics(resultParam);
-                self.helper.cleanAllMarkers();
-                var marker1 = self.convertPoints(res.resultPoints);
-                var marker2 = self.convertPoints(res.resultPoints1);
-                var markerLeaflet1 = [], markerLeaflet2 = [];
-                var minDistance = Infinity;
-                var maxDistance = 0;
-                var colors = [[51, 159, 255], [10, 10, 10]];
+            var resultParam = res.statistics.split("\n")[1].split(";");
+            self.UI.showStatistics(resultParam);
+            self.helper.cleanAllMarkers();
+            var marker1 = self.convertPoints(res.resultPoints); //get all points
+            var marker2 = self.convertPoints(res.resultPoints1);
+            var tooManyMarkers = false;
+            if (marker1.length > 2000) {
+                tooManyMarkers = true;
+                marker1 = marker1.slice(0, 2000);
+                marker2 = marker2.slice(0, 2000);
+            }
+            var markerLeaflet1 = [], markerLeaflet2 = [];
+            var minDistance = Infinity;
+            var maxDistance = 0;
+            var colors = [[51, 159, 255], [10, 10, 10]];
 
-                marker1.forEach(function (m) {
-                    var point = L.point(m[0], m[1]);
-                    markerLeaflet1.push(point);
-                });
-
-                marker2.forEach(function (m, i) {
-                    var point = L.point(m[0], m[1]);
-                    var distance = point.distanceTo(markerLeaflet1[i]);
-                    point.distance = distance;
-                    markerLeaflet1[i].distance = distance;
-                    markerLeaflet2.push(point);
-                    minDistance = Math.min(minDistance, distance);
-                    maxDistance = Math.max(maxDistance, distance);
-                });
-
-
-                var allCoords1 = [];
-
-            self.jsonMap1.features.forEach(function (f) {
-                if (f.geometry && f.geometry.coordinates && f.geometry.coordinates.length > 0)
-                    allCoords1 = allCoords1.concat(self.helper.pushCoords(f.geometry.coordinates));
-
+            //for each point, convert it to Leaflet Point ??
+            marker1.forEach(function (m) {
+                var point = L.point(m[0], m[1]);
+                markerLeaflet1.push(point);
             });
-
-               
-        
-                var allCoords2 = [];
-                self.jsonMap2.features.forEach(function (f) {
-                if (f.geometry && f.geometry.coordinates && f.geometry.coordinates.length > 0)
-                    allCoords2 = allCoords2.concat(self.helper.pushCoords(f.geometry.coordinates));
-
+            //calculate distance to color marker according to it
+            marker2.forEach(function (m, i) {
+                var point = L.point(m[0], m[1]);
+                var distance = point.distanceTo(markerLeaflet1[i]);
+                point.distance = distance;
+                markerLeaflet1[i].distance = distance;
+                markerLeaflet2.push(point);
+                minDistance = Math.min(minDistance, distance);
+                maxDistance = Math.max(maxDistance, distance);
             });
+            markerLeaflet1.forEach(function (marker, i) {
+                var min = Infinity;
+                var closest = undefined;
+                //get the closes point to this marker
+                var arrayClosest = self.jsonMap1.quad.retrieve({x: marker.x, y: marker.y});
 
-
-                markerLeaflet1.forEach(function (marker, i) {
-                    var min = Infinity;
-                    var closest = undefined;
-                    allCoords1.forEach(function (coords) {
-                        var distance = L.point([coords[1], coords[0]]).distanceTo(marker);
+                //if not found: bruteforce the search
+                if (!arrayClosest.length) {
+                    self.jsonMap1.coords.forEach(function (coord) {
+                        var distance = L.point([coord[1], coord[0]]).distanceTo(marker);
                         if (distance < min) {
                             min = distance;
-                            closest = L.point(coords[1], coords[0]);
+                            closest = L.point(coord[1], coord[0]);
                         }
                     });
-                    var distanceHomologous = marker.distance;
-                    var color = self.helper.getColor(((distanceHomologous - minDistance) / (maxDistance - minDistance)) * 100, colors);
-
-                    self.helper.insertMarker(self.map1, closest.x, closest.y, (i + 1), self.markers1, "map1", color);
-                });
-                markerLeaflet2.forEach(function (marker, i) {
-                    var min = Infinity;
-                    var closest = undefined;
-                    allCoords2.forEach(function (coords) {
-                        var distance = L.point([coords[1], coords[0]]).distanceTo(marker);
+                } else {
+                    //if the closest list is found: bruteforce among the list
+                    arrayClosest.forEach(function (coords) {
+                        var distance = L.point([coords.x, coords.y]).distanceTo(marker);
                         if (distance < min) {
                             min = distance;
-                            closest = L.point(coords[1], coords[0]);
+                            closest = L.point(coords.x, coords.y);
+                        }
+                    })
+                }
+                var distanceHomologous = marker.distance;
+                var color = self.helper.getColor(((distanceHomologous - minDistance) / (maxDistance - minDistance)) * 100, colors);
+
+                self.helper.insertMarker(self.map1, closest.x, closest.y, (i + 1), self.markers1, "map1", color);
+            });
+            markerLeaflet2.forEach(function (marker, i) {
+                var min = Infinity;
+                var closest = undefined;
+                //get the closes point to this marker
+                var arrayClosest = self.jsonMap2.quad.retrieve({x: marker.x, y: marker.y});
+
+                //if not found: bruteforce the search
+                if (!arrayClosest.length) {
+                    self.jsonMap2.coords.forEach(function (coord) {
+                        var distance = L.point([coord[1], coord[0]]).distanceTo(marker);
+                        if (distance < min) {
+                            min = distance;
+                            closest = L.point(coord[1], coord[0]);
                         }
                     });
-                    var distanceHomologous = marker.distance;
-                    var color = self.helper.getColor(((distanceHomologous - minDistance) / (maxDistance - minDistance)) * 100, colors);
+                } else {
+                    //if the closest list is found: bruteforce among the list
+                    arrayClosest.forEach(function (coords) {
+                        var distance = L.point([coords.x, coords.y]).distanceTo(marker);
+                        if (distance < min) {
+                            min = distance;
+                            closest = L.point(coords.x, coords.y);
+                        }
+                    })
+                }
+                var distanceHomologous = marker.distance;
+                var color = self.helper.getColor(((distanceHomologous - minDistance) / (maxDistance - minDistance)) * 100, colors);
 
-                    self.helper.insertMarker(self.map2, closest.x, closest.y, (i + 1), self.markers2, "map2", color);
+                self.helper.insertMarker(self.map2, closest.x, closest.y, (i + 1), self.markers2, "map2", color);
+            });
+            $("#loading").hide();
+
+            if (tooManyMarkers) {
+
+                bootbox.confirm({
+                    message: "Too many points found. Only the first 2000 will be considered. " +
+                    "For a better warping, contact us",
+                    buttons: {
+                        cancel: {
+                            label: 'Ok',
+                            className: 'btn-default'
+                        },
+                        confirm: {
+                            label: 'Contact-Us',
+                            className: 'btn-info'
+                        }
+                    },
+                    callback: function (result) {
+                        if (result) {
+                            location.href = "mailto:gabriele.prestifilippo@polimi.it";
+                        }
+                    }
                 });
-                $("#loading").hide();
+
 
             }
-        );
-
+        });
     };
 
     /**
@@ -368,10 +409,11 @@ define([
             var [lat, lng] = p.split(" ");
             if (lat && lng) {
                 var res = proj4(self.projection, 'WGS84', [Number(lat), Number(lng)]);
+                res[0] = Math.round(res[0] * 1000000) / 1000000; //to remove?
+                res[1] = Math.round(res[1] * 1000000) / 1000000; //to remove?
                 newPoints.push([res[1], res[0]]);
             }
         });
-
         return newPoints;
     };
 
@@ -535,8 +577,8 @@ define([
             map2.setOpacity(0);
             over.addOverlay(map1, "Map 1");
             over.addOverlay(map2, "Map 2");
-           // resultMap.removeLayer(map1);
-           // resultMap.removeLayer(map2);
+            // resultMap.removeLayer(map1);
+            // resultMap.removeLayer(map2);
 
             this.resultMap.cluster = L.markerClusterGroup({
                 disableClusteringAtZoom: 18
@@ -647,6 +689,35 @@ define([
             });
 
 
+            var minLat = allCoords.reduce(function (min, arr) {
+                return min <= arr[0] ? min : arr[0];
+            }, Infinity);
+
+            var maxLat = allCoords.reduce(function (max, arr) {
+                return max >= arr[0] ? max : arr[0];
+            }, -Infinity);
+
+            var minLng = allCoords.reduce(function (min, arr) {
+                return min <= arr[1] ? min : arr[1];
+            }, Infinity);
+
+            var maxLng = allCoords.reduce(function (max, arr) {
+                return max >= arr[1] ? max : arr[1];
+            }, -Infinity);
+
+            var bounds = {
+                x: minLng,
+                y: minLat,
+                width: maxLng - minLng,
+                height: maxLat - minLat
+            };
+            var quad = new QuadTree(bounds, true, 30);
+
+
+            allCoords.forEach(function (coord) {
+                quad.insert({x: coord[1], y: coord[0]});
+            });
+            this.jsonMap1.quad = quad;
             this.jsonMap1.coords = allCoords;
 
         } else {
@@ -657,6 +728,8 @@ define([
             var res1 = proj4('WGS84', self.projection, [temp.getBounds()._northEast.lng, temp.getBounds()._northEast.lat]);
             this.jsonMap2.extent = res[0] + " " + res[1] + " " + res1[0] + " " + res1[1];
             this.UI.addPropToMenu(2, this.jsonMap2.prop);
+
+
             var allCoords = [];
             data.features.forEach(function (f) {
                 if (f.geometry && f.geometry.coordinates && f.geometry.coordinates.length > 0)
@@ -664,6 +737,37 @@ define([
 
             });
             this.jsonMap2.coords = allCoords;
+
+            var minLat = allCoords.reduce(function (min, arr) {
+                return min <= arr[0] ? min : arr[0];
+            }, Infinity);
+
+            var maxLat = allCoords.reduce(function (max, arr) {
+                return max >= arr[0] ? max : arr[0];
+            }, -Infinity);
+
+            var minLng = allCoords.reduce(function (min, arr) {
+                return min <= arr[1] ? min : arr[1];
+            }, Infinity);
+
+            var maxLng = allCoords.reduce(function (max, arr) {
+                return max >= arr[1] ? max : arr[1];
+            }, -Infinity);
+
+            var bounds = {
+                x: minLng,
+                y: minLat,
+                width: maxLng - minLng,
+                height: maxLat - minLat
+            };
+            var quad = new QuadTree(bounds, true, 30);
+
+
+            allCoords.forEach(function (coord) {
+                quad.insert({x: coord[1], y: coord[0]});
+            });
+            this.jsonMap2.quad = quad;
+
         }
 
         if (map.listenerClick) {
@@ -676,19 +780,23 @@ define([
             var closest;
             var data;
             if (e.target._container.id == 'map1') {
-                data = self.jsonMap1.coords;
+                data = self.jsonMap1.quad;
             } else {
-                data = self.jsonMap2.coords;
+                data = self.jsonMap2.quad;
             }
 
 
-            data.forEach(function (coords) {
-                var distance = L.point([coords[1], coords[0]]).distanceTo(myPoint);
+            var arrayClosest = data.retrieve({x: e.latlng.lat, y: e.latlng.lng});
+
+            arrayClosest.forEach(function (coords) {
+                var distance = L.point([coords.x, coords.y]).distanceTo(myPoint);
                 if (distance < min) {
                     min = distance;
-                    closest = L.point(coords[1], coords[0]);
+                    closest = L.point(coords.x, coords.y);
                 }
             });
+
+
             if (closest) {
                 var nearest = closest;
                 var map = e.target._container.id;
@@ -810,11 +918,11 @@ define([
 
         var data = `[out:json][timeout:25];(`;
 
-        for(var x=0; x<tags.length;x++){
-            data+=`way[`+tags[x]+`](` + bbox + `);
-                  relation[`+tags[x]+`](` + bbox + `);`
+        for (var x = 0; x < tags.length; x++) {
+            data += `way[` + tags[x] + `](` + bbox + `);
+                  relation[` + tags[x] + `](` + bbox + `);`
         }
-          data+=`);out ;>;out skel qt;`;
+        data += `);out ;>;out skel qt;`;
 
 
         var self = this;
@@ -825,13 +933,13 @@ define([
             contentType: false,
             type: 'POST',
             success: function (data) {
-                if (data.elements.length<1){
+                if (data.elements.length < 1) {
                     $("#loading").hide();
                     self.UI.successMessage("No features found. Try to extend the selection or add new tags");
-                     return;
+                    return;
                 }
                 data = osmtogeojson(data);
-    
+
                 self.addJson(map, data);
             },
             error: function (e) {

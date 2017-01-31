@@ -425,3 +425,16 @@ li {
 span.input-group-addon {
     min-width: 150px;
 }
+hr {
+    border-top: 1px solid #6b6b6b;
+}
+.btn-group>.btn:not(:first-child):not(:last-child):not(.dropdown-toggle) {
+    border-radius: 6px;
+}
+
+.btn-group>.btn:last-child:not(:first-child), .btn-group>.dropdown-toggle:not(:first-child) {
+    border-radius: 6px;
+}
+button#addTag {
+    margin-top: 10px;
+}

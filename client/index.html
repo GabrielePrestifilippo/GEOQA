@@ -59,26 +59,23 @@
             </div>
 
             <br>
-            <label>Import from GeoNode</label><br>
+            <label>Import from <a href="http://131.175.59.195/">Geonode</a></label><br>
 
             <select class="selectpicker dropDownLayers selectDropDownUsers">
                 <option value="0" selected="selected">Select User</option>
             </select>
 
             <select disabled class="selectpicker dropDownLayers selectDropDownLayers">
-                <option value="0"  selected="selected">Select Layer</option>
+                <option value="0" selected="selected">Select Layer</option>
             </select>
-            <!--
-            <label id="fileSelection" class="btn btn-default btn-file">
-                <div id="nameFile">Browse</div>
-                <input type="file" style="display: none;" id="myFile1" name="file">
--->
+
             </label><br><br>
-            <input class="bigButton btn btn-default" type="button" id="importFile" value="Upload">
-            <br><br><br>
-
-            <label>Get from OSM (insert 1 tag)</label><br>
-
+            <button class="bigButton btn btn-info" type="submit" id="importFile" value="Upload">Upload</button>
+            <br>
+            <br>
+            <a style="font-size: 12px;" href="http://131.175.59.195/">Go to Geonode</a><br>
+            <hr>
+            <label>Get from OSM</label><br>
 
 
             <div class="form-group">
@@ -86,13 +83,14 @@
                 <br>
                 <div id="groupTag">
                     <div class="featuresTag">
-                        <input class="form-control tagMultiple osmTag" type="text"  value="building">
+                        <input class="form-control tagMultiple osmTag" type="text" value="building">
                         <i class="fa fa-minus-circle deleteAssociation" aria-hidden="true"></i>
                     </div>
 
                     <div class="featuresTag">
-                        <input class="form-control tagMultiple osmTag" type="text"  value="landuse=forest">
-                        <i onclick="$(this).parent().remove()" class="fa fa-minus-circle deleteAssociation" aria-hidden="true"></i>
+                        <input class="form-control tagMultiple osmTag" type="text" value="landuse=forest">
+                        <i onclick="$(this).parent().remove()" class="fa fa-minus-circle deleteAssociation"
+                           aria-hidden="true"></i>
                     </div>
 
                 </div>
@@ -103,8 +101,7 @@
             </div>
 
             <br>
-
-            <input class="bigButton btn btn-default" type="button" id="sendOverpass" value="Retrieve">
+            <button class="bigButton btn btn-info" type="submit" id="sendOverpass" value="Retrieve">Retrieve</button>
 
 
         </div>
@@ -263,10 +260,12 @@
     <p>
     <li>Upload a map</li>
     <p> The first required step is to upload a new shapefile into GeoNode or use an existing one<br>
-        If you are not already registered in <a href="">GeoNode, do it now</a>
+        If you are not already registered in <a href="http://131.175.59.195/">GeoNode</a>, you can
+        <a href="http://131.175.59.195/account/signup/">sign-up</a> now.
         <br>
-        After having inserted a new layer in GeoNode you can open the left menu  &nbsp;<i class="fa fa-bars" style="font-size: 24px"
-                                                                                           aria-hidden="true"></i>
+        After having inserted a new layer in GeoNode you can open the left menu &nbsp;<i class="fa fa-bars"
+                                                                                         style="font-size: 24px"
+                                                                                         aria-hidden="true"></i>
         Select "New Map" and select in which map you want to upload the shapefile (map 1 or map 2).<br>
         Then select your GeoNode user and the corresponding layer.<br>
         You will be now required to select another layer for the second map. However, you can retrieve the shapes from
@@ -297,18 +296,24 @@
 
     <br>
     <li>Set Parameters</li>
-    <p>To execute the program you can select few parameters:
-        Angle: .....<br>
-        Sigma: .....<br>
-        Maximum Distance: .....<br>
-        Number of Iterations: .....<br>
+    <p>To execute the program you can optionally set few parameters:
+        Angle<br>
+        Sigma<br>
+        Maximum Distance<br>
+        Number of Iterations<br>
     </p>
     <br>
     <li>Run the program</li>
     <p>If everything is set up correctly, and all the homologous points are set, you can run the program by clicking
         the "Run the program" button.</p>
     <br>
-
+    <p>
+        Disclaimer: we are not responsible for the result.<br>
+        The procedure is automatic but requires setting parameters and it is responsibility of the user to select the
+        right
+        ones. <br> Who is interested in an “official” warping can contact us
+        <a href="mailto:gabriele.prestifilippo@polimi.it">GeoLab</a>
+    </p>
 </div>
 
 <div id="footer">
