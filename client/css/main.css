@@ -426,14 +426,15 @@ span.input-group-addon {
     min-width: 150px;
 }
 hr {
-    border-top: 1px solid #6b6b6b;
+    border-top: 1px solid #565656 !important;
+    border-radius: 10px;
 }
 .btn-group>.btn:not(:first-child):not(:last-child):not(.dropdown-toggle) {
-    border-radius: 6px;
+    border-radius: 6px !important;
 }
 
 .btn-group>.btn:last-child:not(:first-child), .btn-group>.dropdown-toggle:not(:first-child) {
-    border-radius: 6px;
+    border-radius: 6px !important;;
 }
 button#addTag {
     margin-top: 10px;

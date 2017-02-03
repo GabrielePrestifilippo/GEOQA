@@ -45,6 +45,7 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'bootstrapSlider', 'js/lib/
     function (GEOQA, $, L, GeoUI, slider, bootbox) {
         this.UI = new GeoUI();
         var self = new GEOQA(this.UI);
+        this.UI.setParent(self);
         geo = self;
 
         /**
@@ -123,10 +124,12 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'bootstrapSlider', 'js/lib/
                         layerMap = self.lMap1;
                         numberMap = self.map1;
                         overMap = self.map1.over;
+                        $("#selectedMap").val(2);
                     } else {
                         layerMap = self.lMap2;
                         numberMap = self.map2;
                         overMap = self.map2.over;
+                        $("#selectedMap").val(1);
                     }
 
                     if (layerMap) {
@@ -146,27 +149,25 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'bootstrapSlider', 'js/lib/
                         maxNativeZoom: 25
                     };
 
-            
-                        $.ajax({
-                            url: url,
-                            dataType: "jsonp",
-                            jsonpCallback: 'parseResponse',
-                            type: 'GET',
-                            success: function (data) {
-                                $("#loading").hide();
-                                self.addJson(numberMap, data, wmsLayer);
 
-                            },
-                            error: function () {
-                                $("#loading").hide();
-                                bootbox.alert("The selected layer is not supported (is it a vector?)", function () {
-                                });
-                            }
-                        });
-              
+                    $.ajax({
+                        url: url,
+                        dataType: "jsonp",
+                        jsonpCallback: 'parseResponse',
+                        type: 'GET',
+                        success: function (data) {
+                            $("#loading").hide();
+                            self.addJson(numberMap, data, wmsLayer);
 
-              
-                    
+                        },
+                        error: function () {
+                            $("#loading").hide();
+                            bootbox.alert("The selected layer is not supported (is it a vector?)", function () {
+                            });
+                        }
+                    });
+
+
                     var wmsLayer = L.tileLayer.wms(rootUrl, defaultParameters);
                     wmsLayer.setOpacity(0.65);
                     numberMap.isWms = true;

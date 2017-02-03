@@ -60,23 +60,29 @@ define([
             maxNativeZoom: 18,
             attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
         });
+        this.map1 = L.map('map1', {center: [45.82789, 9.07617], zoom: 12, minZoom: 2});
+
+
         var omsMap2 = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
             maxZoom: 25,
             maxNativeZoom: 18,
             attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
         });
-        this.map1 = L.map('map1', {center: [45.82789, 9.07617], zoom: 12, minZoom: 2});
+        this.map2 = L.map('map2', {center: [45.82789, 9.07617], zoom: 12, minZoom: 2});
 
-        var base = {
+        var baseMap1 = {
             "Base Map": omsMap1
+        };
+        var baseMap2 = {
+            "Base Map": omsMap2
         };
         var external = {};
 
-        this.map1.over = new L.control.layers(base, external).addTo(this.map1);
+        this.map1.over = new L.control.layers(baseMap1, external).addTo(this.map1);
         this.map1.addLayer(omsMap1);
         this.map1.boxZoom.disable();
-        this.map2 = L.map('map2', {center: [45.82789, 9.07617], zoom: 12, minZoom: 2});
-        this.map2.over = new L.control.layers(base, external).addTo(this.map2);
+
+        this.map2.over = new L.control.layers(baseMap2, external).addTo(this.map2);
         this.map2.addLayer(omsMap2);
         this.map2.boxZoom.disable();
         this.map1.selectArea.enable();

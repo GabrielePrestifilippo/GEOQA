@@ -2,6 +2,7 @@ define(['jquery'], function ($) {
 
     var GeoUI = function () {
         var self = this;
+
         /**
          * Insert the name of the selected file on the button
          */
@@ -262,6 +263,10 @@ define(['jquery'], function ($) {
 
     };
 
+    GeoUI.prototype.setParent = function (parent) {
+        this.parent = parent;
+    };
+
     GeoUI.prototype.fillLayersList = function () {
 
         var selectUsers = $(".selectDropDownUsers");
@@ -271,7 +276,7 @@ define(['jquery'], function ($) {
 
 
         $.ajax({
-            url: CONFIG.GEONODE+"api/profiles/",
+            url: CONFIG.GEONODE + "api/profiles/",
             dataType: "jsonp",
             jsonpCallback: 'callback',
             type: 'GET',
@@ -288,10 +293,10 @@ define(['jquery'], function ($) {
             }
         });
 
-        selectUsers.on("change",function(e){
+        selectUsers.on("change", function (e) {
             var selectedUser = $(this).find("option:selected").text();
             $.ajax({
-                url: CONFIG.GEONODE+"/api/layers/?owner__username="+selectedUser,
+                url: CONFIG.GEONODE + "/api/layers/?owner__username=" + selectedUser,
                 dataType: "jsonp",
                 jsonpCallback: 'callback',
                 type: 'GET',
@@ -299,8 +304,8 @@ define(['jquery'], function ($) {
                     var group = "";
                     var titles = Object.keys(data.objects).map(title => data.objects[title].title);
                     var url = Object.keys(data.objects).map(title => data.objects[title].detail_url);
-                    titles.forEach(function (title,i) {
-                        group += "<option value='"+url[i]+"'>" + title + "</option>";
+                    titles.forEach(function (title, i) {
+                        group += "<option value='" + url[i] + "'>" + title + "</option>";
                     });
                     selectLayers.html(group);
                     selectLayers.attr('disabled', false);
@@ -308,8 +313,6 @@ define(['jquery'], function ($) {
                 }
             });
         });
-
-
 
 
     };
@@ -328,7 +331,9 @@ define(['jquery'], function ($) {
         } else {
             $("#map1, #map2").hide();
             $("#resultMap").show();
-            $("#downloadButton").show();
+            if (self.parent.resultJSON) {
+                $("#downloadButton").show();
+            }
             $("#mapAfterControls").hide();
             $("#doubleViewButton").show();
             $(".fa-forward").addClass("fa-backward").removeClass("fa-forward");
