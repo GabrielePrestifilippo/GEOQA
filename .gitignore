@@ -1,5 +1,8 @@
 .idea/
 server/target/
+serverBackup
 server/.settings/org.eclipse.jdt.core.prefs
 client/.idea/
 .idea/workspace.xml
+server/GEOQA.iml
+server/GEOQA_Server.iml
