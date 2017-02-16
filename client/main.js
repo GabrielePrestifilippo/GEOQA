@@ -77,7 +77,7 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'bootstrapSlider', 'js/lib/
             var numberMap = $("#selectedMap")[0].value;
             var selected = selectLayers.find("option:selected").val().split("/layers/geonode%3A")[1];
 
-            var url = CONFIG.GEOSERVER + 'wfs?srsName=EPSG%3A4326&typename=geonode%3A' + selected + '&outputFormat=text/javascript&version=1.0.0&service=WFS&request=GetFeature';
+            var url = CONFIG.geoserverURL() + 'wfs?srsName=EPSG%3A4326&typename=geonode%3A' + selected + '&outputFormat=text/javascript&version=1.0.0&service=WFS&request=GetFeature';
             var layerMap;
             if (self.map1.over._layers.length > 1 && numberMap == String(1)) {
                 bootbox.confirm({
@@ -138,7 +138,7 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'bootstrapSlider', 'js/lib/
                     }
 
                     $("#loading").show();
-                    var rootUrl = CONFIG.GEOSERVER + 'wms';
+                    var rootUrl = CONFIG.geoserverURL() + 'wms';
                     var defaultParameters = {
                         service: 'WMS',
                         layers: 'geonode:' + selected,

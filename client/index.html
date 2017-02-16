@@ -252,53 +252,61 @@
 <div id="instructions">
     <h2>What is GEOQA</h2>
     <br>
-    <p>GEOQA - Geomatics and Earth Observation Quality Assessment - is a tool to compare two vector maps and warp a
-        first map into a second one.<br>
-        It allows to upload two shapefiles and then select some homologous points in order to perform the warping
-        and retrieve the differences.
+    <p>GEOQA - Geomatics and Earth Observation Quality Assessment - is a tool to compare two vector maps,
+        a Reference Map (RM), a Target Map (TM) and eventually warp the first into the second one.<br>
+        It allows users to upload two ESRI Shapefiles (with EPSG:4326) and then select at least five homologous points
+        in order to evaluate the accuracy of the Target Map by comparison with the Reference one, and to perform the
+        warping of the TM into the RM.
     </p>
     <h2>How to use the application</h2>
     <br>
     <p>
-    <li>Upload a map</li>
-    <p> The first required step is to upload a new shapefile into GeoNode or use an existing one<br>
+    <ul>1) Map Uploading</ul>
+    <li>Upload a new shapefile into <a href="http://131.175.59.195/">GeoNode</a>(or use a sample one)
         If you are not already registered in <a href="http://131.175.59.195/">GeoNode</a>, you can
         <a href="http://131.175.59.195/account/signup/">sign-up</a> now.
-        <br>
-        After having inserted a new layer in GeoNode you can open the left menu &nbsp;<i class="fa fa-bars"
-                                                                                         style="font-size: 24px"
-                                                                                         aria-hidden="true"></i>
-        Select "New Map" and select in which map you want to upload the shapefile (map 1 or map 2).<br>
-        Then select your GeoNode user and the corresponding layer.<br>
-        You will be now required to select another layer for the second map. However, you can retrieve the shapes from
-        OpenStreetMap.<br>
-        To retieve the shapes from OpenStreetMap, select an area in the interested map, by holding the SHIFT key
-        and dragging the mouse pointer over the interested area.<br>
-        When the selection is performed you can click on "Retrieve OSM" to download the data from OpenStreetMap.
-        It is possible to now insert some <a href="http://wiki.openstreetmap.org/wiki/Tags">OSM tags</a> or
-        use the predefined ones.<br></p>
+    </li>
+
+    <li>Open the left menu &nbsp;<i class="fa fa-bars" style="font-size: 24px" aria-hidden="true"></i>
+    </li>
+    <li>Select "New Map" and select the destination of the shapefile (RM or a TM)</li>
+    <li>Select your <a href="http://131.175.59.195/">GeoNode</a> user and the corresponding shapefile layer</li>
+    <li>You will be now required to select another layer for the second map. However, you can retrieve the
+        shapes
+        from
+        OpenStreetMap
+        <ol>To retrieve the shapes from OpenStreetMap, select an area in the interested map, by holding the SHIFT
+            key
+            and dragging the mouse pointer over the interested area
+        </ol>
+        <ol>Click on "Retrieve OSM" to download the data from OpenStreetMap.
+            It is possible to now insert some <a href="http://wiki.openstreetmap.org/wiki/Tags">OSM tags</a> or
+            use the predefined ones
+        </ol>
+
+    </li>
 
     <br>
-    <li>Select Pair</li>
-    <p>In order to perform the warping on the two maps, you are required to select few corresponding points in both
-        maps.<br>
-        To do so, select first a point in the left map, then select the corresponding point in the right map.<br>
-        If by mistake you select a wrong point you can delete it by clicking on it and removing it.<br>
+    <ul>2) Pair Selection</ul>
+    <li>Select a point in the RM by clicking in the nearness of one angle of the shapefile</li>
+    <li>Select now the corresponding point in the TM</li><br>
+    <p>If by mistake you select a wrong point you can delete it by clicking on it and removing it.<br>
         A minimum of 5 homologous points is required to perform the transformation.
-    </p>
-
+        We recommend to select four points as close as possible to the four corners and a point in the center of the
+        map.</p>
     <br>
-
-    <li>Retrieve homologous points</li>
+    <ul>3) Homologous point retrieval</ul>
     <p>On the left menu, a sub-menu to retrieve the homologous points is available.<br>
-        Select it and click on Find Points.<br>
-        The application will retrieve a list of homologous points that you can edit, along with some statistics
-        If you are interested in creating association among attributes of the first and second map, you can select on
-        the "Associate Features" dropdown menu the attributes you want to associate<br>
+    <li>Select the left menu and click on "Find Points"</li><br>
+    <p>The application will retrieve a list of homologous points that you can edit, along with some statistics.<br>
+        If you are interested is possible to create association among attributes of the RM and TM
     </p>
+    <ol>Open the "Find Homologous" menu</ol>
+    <ol>Select on the "Associate Features" dropdown menu the attributes you want to match</ol>
+
 
     <br>
-    <li>Set Parameters</li>
+    <ul>4) Parameters Settings</ul>
     <p>To execute the program you can optionally set few parameters:
         Angle<br>
         Sigma<br>
@@ -306,7 +314,7 @@
         Number of Iterations<br>
     </p>
     <br>
-    <li>Run the program</li>
+    <ul>5) Running the program</ul>
     <p>If everything is set up correctly, and all the homologous points are set, you can run the program by clicking
         the "Run the program" button.</p>
     <br>

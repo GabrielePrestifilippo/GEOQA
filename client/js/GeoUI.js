@@ -276,7 +276,7 @@ define(['jquery'], function ($) {
 
 
         $.ajax({
-            url: CONFIG.GEONODE + "api/profiles/",
+            url: CONFIG.geonodeURL() + "api/profiles/",
             dataType: "jsonp",
             jsonpCallback: 'callback',
             type: 'GET',
@@ -296,7 +296,7 @@ define(['jquery'], function ($) {
         selectUsers.on("change", function (e) {
             var selectedUser = $(this).find("option:selected").text();
             $.ajax({
-                url: CONFIG.GEONODE + "/api/layers/?owner__username=" + selectedUser,
+                url: CONFIG.geonodeURL() + "/api/layers/?owner__username=" + selectedUser,
                 dataType: "jsonp",
                 jsonpCallback: 'callback',
                 type: 'GET',
