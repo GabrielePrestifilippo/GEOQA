@@ -129,7 +129,7 @@ define([
 
         var promise = new Promise(function (resolve) {
             $.ajax({
-                url: CONFIG.homologousURL,
+                url: CONFIG.homologousURL(),
                 type: "POST",
                 data: formData,
                 enctype: 'multipart/form-data',
@@ -151,7 +151,6 @@ define([
             self.helper.cleanAllMarkers();
             var marker1 = self.convertPoints(res.resultPoints); //get all points
             var marker2 = self.convertPoints(res.resultPoints1);
-            var tooManyMarkers = false;
             if (marker1.length > 2000) {
                 tooManyMarkers = true;
                 marker1 = marker1.slice(0, 2000);
@@ -177,92 +176,21 @@ define([
                 minDistance = Math.min(minDistance, distance);
                 maxDistance = Math.max(maxDistance, distance);
             });
-            markerLeaflet1.forEach(function (marker, i) {
-                var min = Infinity;
-                var closest = undefined;
-                //get the closes point to this marker
-                var arrayClosest = self.jsonMap1.quad.retrieve({x: marker.x, y: marker.y});
 
-                //if not found: bruteforce the search
-                if (!arrayClosest.length) {
-                    self.jsonMap1.coords.forEach(function (coord) {
-                        var distance = L.point([coord[1], coord[0]]).distanceTo(marker);
-                        if (distance < min) {
-                            min = distance;
-                            closest = L.point(coord[1], coord[0]);
-                        }
-                    });
-                } else {
-                    //if the closest list is found: bruteforce among the list
-                    arrayClosest.forEach(function (coords) {
-                        var distance = L.point([coords.x, coords.y]).distanceTo(marker);
-                        if (distance < min) {
-                            min = distance;
-                            closest = L.point(coords.x, coords.y);
-                        }
-                    })
-                }
+            markerLeaflet1.forEach(function (marker, i) {
                 var distanceHomologous = marker.distance;
                 var color = self.helper.getColor(((distanceHomologous - minDistance) / (maxDistance - minDistance)) * 100, colors);
 
-                self.helper.insertMarker(self.map1, closest.x, closest.y, (i + 1), self.markers1, "map1", color);
+                self.helper.insertMarker(self.map1, marker.x, marker.y, (i + 1), self.markers1, "map1", color);
             });
             markerLeaflet2.forEach(function (marker, i) {
-                var min = Infinity;
-                var closest = undefined;
-                //get the closes point to this marker
-                var arrayClosest = self.jsonMap2.quad.retrieve({x: marker.x, y: marker.y});
-
-                //if not found: bruteforce the search
-                if (!arrayClosest.length) {
-                    self.jsonMap2.coords.forEach(function (coord) {
-                        var distance = L.point([coord[1], coord[0]]).distanceTo(marker);
-                        if (distance < min) {
-                            min = distance;
-                            closest = L.point(coord[1], coord[0]);
-                        }
-                    });
-                } else {
-                    //if the closest list is found: bruteforce among the list
-                    arrayClosest.forEach(function (coords) {
-                        var distance = L.point([coords.x, coords.y]).distanceTo(marker);
-                        if (distance < min) {
-                            min = distance;
-                            closest = L.point(coords.x, coords.y);
-                        }
-                    })
-                }
                 var distanceHomologous = marker.distance;
                 var color = self.helper.getColor(((distanceHomologous - minDistance) / (maxDistance - minDistance)) * 100, colors);
-
-                self.helper.insertMarker(self.map2, closest.x, closest.y, (i + 1), self.markers2, "map2", color);
+                self.helper.insertMarker(self.map2, marker.x, marker.y, (i + 1), self.markers2, "map2", color);
             });
+
             $("#loading").hide();
 
-            if (tooManyMarkers) {
-
-                bootbox.confirm({
-                    message: "Too many points found. Only the first 2000 will be considered. " +
-                    "For a better warping, contact us",
-                    buttons: {
-                        cancel: {
-                            label: 'Ok',
-                            className: 'btn-default'
-                        },
-                        confirm: {
-                            label: 'Contact-Us',
-                            className: 'btn-info'
-                        }
-                    },
-                    callback: function (result) {
-                        if (result) {
-                            location.href = "mailto:gabriele.prestifilippo@polimi.it";
-                        }
-                    }
-                });
-
-
-            }
         });
     };
 
@@ -455,7 +383,7 @@ define([
         }
         var promise = new Promise(function (resolve) {
             $.ajax({
-                url: CONFIG.getMapURL,
+                url: CONFIG.getMapURL(),
                 type: "POST",
                 data: formData,
                 enctype: 'multipart/form-data',
@@ -529,12 +457,12 @@ define([
                         sliced: function (properties, zoom) {
                             return {
                                 fillColor: '#66ff66',
-                                fillOpacity: 0.65,
+                                fillOpacity: 1,
                                 stroke: true,
                                 fill: true,
                                 color: 'red',
                                 strokeOpacity: 2,
-                                weight: 4
+                                weight: 1
                             }
                         }
                     },
@@ -688,6 +616,7 @@ define([
             this.jsonMap1.extent = res[0] + " " + res[1] + " " + res1[0] + " " + res1[1];
             this.UI.addPropToMenu(1, this.jsonMap1.prop);
             var allCoords = [];
+
             data.features.forEach(function (f) {
                 if (f.geometry && f.geometry.coordinates && f.geometry.coordinates.length > 0)
                     allCoords = allCoords.concat(self.helper.pushCoords(f.geometry.coordinates));
@@ -723,6 +652,7 @@ define([
             allCoords.forEach(function (coord) {
                 quad.insert({x: coord[1], y: coord[0]});
             });
+
             this.jsonMap1.quad = quad;
             this.jsonMap1.coords = allCoords;
 
