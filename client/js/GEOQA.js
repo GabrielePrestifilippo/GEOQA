@@ -151,11 +151,7 @@ define([
             self.helper.cleanAllMarkers();
             var marker1 = self.convertPoints(res.resultPoints); //get all points
             var marker2 = self.convertPoints(res.resultPoints1);
-            if (marker1.length > 2000) {
-                tooManyMarkers = true;
-                marker1 = marker1.slice(0, 2000);
-                marker2 = marker2.slice(0, 2000);
-            }
+
             var markerLeaflet1 = [], markerLeaflet2 = [];
             var minDistance = Infinity;
             var maxDistance = 0;
@@ -206,12 +202,20 @@ define([
 
         //searchAndFill will fill an array with the coordinates of each feature
         //digging deep into the objects inside
-        function searchAndFill(ob, arr) {
+        function searchAndFill(ob, arr, type, letterType) {
             if (typeof(ob) == "object" && typeof(ob[0]) == "number") {
                 arr.push([ob[0], ob[1]]);
+            } else if (typeof(ob) == "object" && typeof(ob[0]) == "object" && typeof(ob[0][0]) == "number") {
+                var subArray=[];
+                subArray.type=type;
+                subArray.letterType=letterType;
+                arr.push(subArray);
+                ob.forEach(function (insideOb) {
+                    searchAndFill(insideOb, subArray,  type, letterType)
+                })
             } else {
                 ob.forEach(function (insideOb) {
-                    searchAndFill(insideOb, arr)
+                    searchAndFill(insideOb, arr,  type, letterType)
                 })
             }
         }
@@ -219,47 +223,50 @@ define([
         var arrayList = [];
         var letterType;
         //for each feature of the json
-        jsonData.features.forEach(function (features, index) {
-            if (!features.geometry || !features.geometry.type) {
-                return;
-            }
-            arrayList[index] = [];
-            arrayList[index].myProp = type; //assign a properties to each feature, initialize it to a number (0,1->map0, map1)
 
-            if (features.geometry.type == "Polygon" || features.geometry.type == "MultiPolygon") {
-                letterType = "A";
-            } else {
-                letterType = "L";
-            }
-            arrayList[index].letterType = letterType;
-            //retrieve all the coordinates for the selected feature and put the in the arrayList
-            searchAndFill(features.geometry.coordinates, arrayList[index]);
+            jsonData.features.forEach(function (features, index) {
+                if (!features.geometry || !features.geometry.type) {
+                    return;
+                }
 
-            //if the feature has properties
-            if (features.properties) {
-                //for each property
-                for (var objKey in features.properties) {
-                    if (!features.properties[objKey]) { //check if some properties are null
-                        return
-                    }
-                    //for each available attribute, got from the association list:
-                    for (var a = 0; a < attributes.length; a++) {
-                        //try to get a key-value pair splitting the attribute over ":", it is the OSM case
-                        var [myKey, myVal] = attributes[a][type].split(":");
-                        //if key-val are found, so we have a OSM attributes
-                        if (myVal && features.properties[objKey][myKey] && features.properties[objKey][myKey] == myVal) {
-                            arrayList[index].myProp = myKey + ":" + myVal;
-                            //set the property of the current feature to key:val
-                            return;
-                        } else if (!myVal && features.properties[objKey] == myKey) {
-                            //if we have just an attribute not in the form key:val, we simply set the value
-                            arrayList[index].myProp = myKey;
-                            return;
+                //arrayList[index] = [];
+                myProp = type; //assign a properties to each feature, initialize it to a number (0,1->map0, map1)
+
+                if (features.geometry.type == "Polygon" || features.geometry.type == "MultiPolygon") {
+                    letterType = "A";
+                } else {
+                    letterType = "L";
+                }
+
+                //retrieve all the coordinates for the selected feature and put the in the arrayList
+                searchAndFill(features.geometry.coordinates, arrayList, type, letterType);
+
+                //if the feature has properties
+                if (features.properties) {
+                    //for each property
+                    for (var objKey in features.properties) {
+                        if (!features.properties[objKey]) { //check if some properties are null
+                            return
+                        }
+                        //for each available attribute, got from the association list:
+                        for (var a = 0; a < attributes.length; a++) {
+                            //try to get a key-value pair splitting the attribute over ":", it is the OSM case
+                            var [myKey, myVal] = attributes[a][type].split(":");
+                            //if key-val are found, so we have a OSM attributes
+                            if (myVal && features.properties[objKey][myKey] && features.properties[objKey][myKey] == myVal) {
+                                arrayList[index].myProp = myKey + ":" + myVal;
+                                //set the property of the current feature to key:val
+                                return;
+                            } else if (!myVal && features.properties[objKey] == myKey) {
+                                //if we have just an attribute not in the form key:val, we simply set the value
+                                arrayList[index].myProp = myKey;
+                                return;
+                            }
                         }
                     }
                 }
-            }
-        });
+            });
+
         //we fill the car file, by putting the extent in the first line
         var carString = jsonData.extent;
         arrayList.forEach(function (feature) {
@@ -623,37 +630,6 @@ define([
 
             });
 
-
-            var minLat = allCoords.reduce(function (min, arr) {
-                return min <= arr[0] ? min : arr[0];
-            }, Infinity);
-
-            var maxLat = allCoords.reduce(function (max, arr) {
-                return max >= arr[0] ? max : arr[0];
-            }, -Infinity);
-
-            var minLng = allCoords.reduce(function (min, arr) {
-                return min <= arr[1] ? min : arr[1];
-            }, Infinity);
-
-            var maxLng = allCoords.reduce(function (max, arr) {
-                return max >= arr[1] ? max : arr[1];
-            }, -Infinity);
-
-            var bounds = {
-                x: minLng,
-                y: minLat,
-                width: maxLng - minLng,
-                height: maxLat - minLat
-            };
-            var quad = new QuadTree(bounds, true, 30);
-
-
-            allCoords.forEach(function (coord) {
-                quad.insert({x: coord[1], y: coord[0]});
-            });
-
-            this.jsonMap1.quad = quad;
             this.jsonMap1.coords = allCoords;
 
         } else {
@@ -674,36 +650,6 @@ define([
             });
             this.jsonMap2.coords = allCoords;
 
-            var minLat = allCoords.reduce(function (min, arr) {
-                return min <= arr[0] ? min : arr[0];
-            }, Infinity);
-
-            var maxLat = allCoords.reduce(function (max, arr) {
-                return max >= arr[0] ? max : arr[0];
-            }, -Infinity);
-
-            var minLng = allCoords.reduce(function (min, arr) {
-                return min <= arr[1] ? min : arr[1];
-            }, Infinity);
-
-            var maxLng = allCoords.reduce(function (max, arr) {
-                return max >= arr[1] ? max : arr[1];
-            }, -Infinity);
-
-            var bounds = {
-                x: minLng,
-                y: minLat,
-                width: maxLng - minLng,
-                height: maxLat - minLat
-            };
-            var quad = new QuadTree(bounds, true, 30);
-
-
-            allCoords.forEach(function (coord) {
-                quad.insert({x: coord[1], y: coord[0]});
-            });
-            this.jsonMap2.quad = quad;
-
         }
 
         if (map.listenerClick) {
@@ -716,23 +662,19 @@ define([
             var closest;
             var data;
             if (e.target._container.id == 'map1') {
-                data = self.jsonMap1.quad;
+                data = self.jsonMap1.coords;
             } else {
-                data = self.jsonMap2.quad;
+                data = self.jsonMap2.coords;
             }
 
 
-            var arrayClosest = data.retrieve({x: e.latlng.lat, y: e.latlng.lng});
-
-            arrayClosest.forEach(function (coords) {
-                var distance = L.point([coords.x, coords.y]).distanceTo(myPoint);
+            data.forEach(function (coords) {
+                var distance = L.point([coords[1], coords[0]]).distanceTo(myPoint);
                 if (distance < min) {
                     min = distance;
-                    closest = L.point(coords.x, coords.y);
+                    closest = L.point(coords[1], coords[0]);
                 }
             });
-
-
             if (closest) {
                 var nearest = closest;
                 var map = e.target._container.id;
