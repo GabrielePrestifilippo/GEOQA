@@ -3,7 +3,7 @@
 <head lang="en">
 
     <meta charset="UTF-8">
-    <title>GEOQA - Geomatics and Earth Observation Quality Assessment</title>
+    <title>MAW - Map Assessment and Warping</title>
 
 
     <script src="js/lib/math.js" type="text/javascript"></script>
@@ -18,7 +18,9 @@
     <link rel="stylesheet" href="css/MarkerCluster.Default.css">
     <link rel="stylesheet" href="css/bootstrap-slider.min.css">
     <link rel="stylesheet" href="css/main.css">
-
+    <link rel="icon"
+          type="image/png"
+          href="images/MAW_logo.png">
 
     <link href="https://fonts.googleapis.com/css?family=PT+Sans" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Oswald" rel="stylesheet">
@@ -53,11 +55,12 @@
 
                 <label>Select destination map</label><br>
                 <select class="form-control" id="selectedMap">
-                    <option value="1" selected="selected">Map 1</option>
-                    <option value="2">Map 2</option>
+                    <option value="1" selected="selected">Reference Map (RM)</option>
+                    <option value="2">Target Map (TM)</option>
                 </select>
+                <p>The destination map RM/TM applies for any map retrieved either from Geonode or from OpenStreetMap</p>
             </div>
-            <br>
+
             <hr>
 
             <br>
@@ -173,7 +176,7 @@
 <div id="banner">
     <div id="openMenu"><i class="fa fa-bars" style="font-size: 24px" aria-hidden="true"></i></div>
     <div id="doubleViewButton"><i class="fa fa-backward" style="font-size: 24px" aria-hidden="true"></i></div>
-    <div id="logo">GEOQA - Geomatics and Earth Observation Quality Assessment</div>
+    <div id="logo"><img style="max-height: 100px; padding: 10px;" src="images/MAW_logo.png"> Map Assessment and Warping</div>
 </div>
 <div id="messageContainer" style="display: none; opacity: 0;">Selection performed</div>
 <div id="page">
@@ -245,15 +248,20 @@
 
 </div>
 <div id="mapAfterControls">
+    <div class="names">
+        <div class="name">REFERENCE MAP (RM)</div>
+        <div class="name">TARGET MAP (TM)</div>
+    </div>
     <div id="controlLeft"><label style="float: left; line-height: 50px;" ;> Synchronize Maps &nbsp;
         &nbsp;  </label><input type="checkbox" data-size="small" id="sync1"></div>
 
 </div>
 <div id="instructions">
-    <h2>What is GEOQA</h2>
     <br>
-    <p>GEOQA - Geomatics and Earth Observation Quality Assessment - is a tool to compare two vector maps,
-        a Reference Map (RM), a Target Map (TM) and eventually warp the first into the second one.<br>
+    <h2>What is MAW</h2>
+    <br>
+    <p>MAW - Map Assessment and Warping - is a tool to compare two vector maps,
+        a Reference Map (RM), a Target Map (TM) and eventually warp the first onto the second one.<br>
         It allows users to upload two ESRI Shapefiles (with EPSG:4326) and then select at least five homologous points
         in order to evaluate the accuracy of the Target Map by comparison with the Reference one, and to perform the
         warping of the TM into the RM.
@@ -262,16 +270,16 @@
     <br>
     <p>
     <ul>1) Map Uploading</ul>
-    <li>Upload a new shapefile into <a href="http://131.175.59.195/">GeoNode</a>(or use a sample one)
-        If you are not already registered in <a href="http://131.175.59.195/">GeoNode</a>, you can
+    <li>&#9679; Upload a new shapefile into <a href="http://131.175.59.195/">GeoNode</a> (or use a sample one)
+        If you are not registered in <a href="http://131.175.59.195/">GeoNode</a>, you can
         <a href="http://131.175.59.195/account/signup/">sign-up</a> now.
     </li>
 
-    <li>Open the left menu &nbsp;<i class="fa fa-bars" style="font-size: 24px" aria-hidden="true"></i>
+    <li>&#9679; Open the left menu &nbsp;<i class="fa fa-bars" style="font-size: 24px" aria-hidden="true"></i>
     </li>
-    <li>Select "New Map" and select the destination of the shapefile (RM or a TM)</li>
-    <li>Select your <a href="http://131.175.59.195/">GeoNode</a> user and the corresponding shapefile layer</li>
-    <li>You will be now required to select another layer for the second map. However, you can retrieve the
+    <li>&#9679; Select "New Map" and select the destination of the shapefile (RM or a TM)</li>
+    <li>&#9679; Select your <a href="http://131.175.59.195/">GeoNode</a> user and the corresponding shapefile layer</li>
+    <li>&#9679; You will be now required to select another layer for the second map. However, you can retrieve the
         shapes
         from
         OpenStreetMap
@@ -288,36 +296,54 @@
 
     <br>
     <ul>2) Pair Selection</ul>
-    <li>Select a point in the RM by clicking in the nearness of one angle of the shapefile</li>
-    <li>Select now the corresponding point in the TM</li><br>
+    <li>&#9679; Select a point in the RM by clicking in the proximity of one corner of the shapefile</li>
+    <li>&#9679; Select now the corresponding point in the TM</li>
+    <br>
     <p>If by mistake you select a wrong point you can delete it by clicking on it and removing it.<br>
         A minimum of 5 homologous points is required to perform the transformation.
         We recommend to select four points as close as possible to the four corners and a point in the center of the
         map.</p>
     <br>
     <ul>3) Homologous point retrieval</ul>
-    <p>On the left menu, a sub-menu to retrieve the homologous points is available.<br>
-    <li>Select the left menu and click on "Find Points"</li><br>
-    <p>The application will retrieve a list of homologous points that you can edit, along with some statistics.<br>
-        If you are interested is possible to create association among attributes of the RM and TM
-    </p>
-    <ol>Open the "Find Homologous" menu</ol>
-    <ol>Select on the "Associate Features" dropdown menu the attributes you want to match</ol>
-
-
+    <p>On the left menu, a sub-menu to retrieve the homologous points is available</p>
+    <li>&#9679; Select the left menu and click on "Find Points"</li>
     <br>
+    <p>The application will retrieve a list of homologous points that you can edit, along with some statistics.<br>
+        If you are interested, it is possible to create association among attributes for the RM and TM.<br>
+        In this way, only the feature that have an association will be warped.
+        E.g. If you want to warp only the buildings, you can create an association with Buildings->Buildings.
+    </p>
+    <li>&#9679; Open the "Find Homologous" menu</li>
+    <li>&#9679; Select on the "Associate Features" dropdown menu the attributes you want to match</li>
+    <br>
+    <p>The Color of the marker for the homologous points retrieved indicates the proximity of each point to
+        the corresponding point, by measuring the distance over the basemap. The darker the marker is, the more likely
+        the maps will have a bigger deformation in that point, so be sure to check them before proceeding with the
+        warping.
+    </p>
+
+
+    <!--
+     <br>
     <ul>4) Parameters Settings</ul>
-    <p>To execute the program you can optionally set few parameters:
+    <p>To execute the program you can optionally set few parameters:</p>
         Angle<br>
         Sigma<br>
         Maximum Distance<br>
         Number of Iterations<br>
     </p>
+    -->
     <br>
     <ul>5) Running the program</ul>
     <p>If everything is set up correctly, and all the homologous points are set, you can run the program by clicking
         the "Run the program" button.</p>
     <br>
+    <ul>6) Customize the warping</ul>
+    <p>If you are not satisfied with the results obtained, you can go back by pressing the back button
+        <i class="fa fa-backward" style="font-size: 24px; padding:4px;" aria-hidden="true"></i> that will appear in the
+        top left corner after a successful warping, and remove or add new homologous points.</p>
+    <br>
+
     <p>
         Disclaimer: we are not responsible for the result.<br>
         The procedure is automatic but requires setting parameters and it is responsibility of the user to select the

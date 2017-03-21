@@ -274,15 +274,17 @@ define(['jquery'], function ($) {
         selectUsers.selectpicker();
         selectLayers.selectpicker();
 
-
         $.ajax({
-            url: CONFIG.geonodeURL() + "api/profiles/",
+            url: CONFIG.geonodeURL() + "/api/profiles/",
             dataType: "jsonp",
             jsonpCallback: 'callback',
             type: 'GET',
             success: function (data) {
                 var group = "";
-                var names = Object.keys(data.objects).map(name => data.objects[name].username);
+                var names = Object.keys(data.objects).map(function (name) {
+                    return data.objects[name].username;
+                });
+
                 names.forEach(function (name) {
 
                     group += "<option>" + name + "</option>";
@@ -302,8 +304,12 @@ define(['jquery'], function ($) {
                 type: 'GET',
                 success: function (data) {
                     var group = "";
-                    var titles = Object.keys(data.objects).map(title => data.objects[title].title);
-                    var url = Object.keys(data.objects).map(title => data.objects[title].detail_url);
+                    var titles = Object.keys(data.objects).map(function (title) {
+                        return data.objects[title].title;
+                    });
+                    var url = Object.keys(data.objects).map(function (title) {
+                        return data.objects[title].detail_url;
+                    });
                     titles.forEach(function (title, i) {
                         group += "<option value='" + url[i] + "'>" + title + "</option>";
                     });

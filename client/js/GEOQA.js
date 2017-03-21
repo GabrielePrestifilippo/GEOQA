@@ -129,7 +129,7 @@ define([
 
         var promise = new Promise(function (resolve) {
             $.ajax({
-                url: CONFIG.homologousURL,
+                url: CONFIG.homologousURL(),
                 type: "POST",
                 data: formData,
                 enctype: 'multipart/form-data',
@@ -455,7 +455,7 @@ define([
         }
         var promise = new Promise(function (resolve) {
             $.ajax({
-                url: CONFIG.getMapURL,
+                url: CONFIG.getMapURL(),
                 type: "POST",
                 data: formData,
                 enctype: 'multipart/form-data',
@@ -679,6 +679,8 @@ define([
         vectorGrid.addTo(map);
         var temp = L.geoJson(data);
 
+        var allCoords=getCoords(data);
+
         if (map._container.id == "map1") {
             this.jsonMap1 = data;
             this.lMap1 = vectorGrid;
@@ -687,6 +689,7 @@ define([
             var res1 = proj4('WGS84', self.projection, [temp.getBounds()._northEast.lng, temp.getBounds()._northEast.lat]);
             this.jsonMap1.extent = res[0] + " " + res[1] + " " + res1[0] + " " + res1[1];
             this.UI.addPropToMenu(1, this.jsonMap1.prop);
+           /*
             var allCoords = [];
             data.features.forEach(function (f) {
                 if (f.geometry && f.geometry.coordinates && f.geometry.coordinates.length > 0)
@@ -694,7 +697,7 @@ define([
 
             });
 
-
+*/
             var minLat = allCoords.reduce(function (min, arr) {
                 return min <= arr[0] ? min : arr[0];
             }, Infinity);
@@ -717,7 +720,7 @@ define([
                 width: maxLng - minLng,
                 height: maxLat - minLat
             };
-            var quad = new QuadTree(bounds, true, 30);
+            var quad = new QuadTree(bounds, true, 1);
 
 
             allCoords.forEach(function (coord) {
@@ -735,13 +738,14 @@ define([
             this.jsonMap2.extent = res[0] + " " + res[1] + " " + res1[0] + " " + res1[1];
             this.UI.addPropToMenu(2, this.jsonMap2.prop);
 
-
+/*
             var allCoords = [];
             data.features.forEach(function (f) {
                 if (f.geometry && f.geometry.coordinates && f.geometry.coordinates.length > 0)
                     allCoords = allCoords.concat(self.helper.pushCoords(f.geometry.coordinates));
 
             });
+*/
             this.jsonMap2.coords = allCoords;
 
             var minLat = allCoords.reduce(function (min, arr) {
@@ -766,7 +770,7 @@ define([
                 width: maxLng - minLng,
                 height: maxLat - minLat
             };
-            var quad = new QuadTree(bounds, true, 30);
+            var quad = new QuadTree(bounds, true, 2);
 
 
             allCoords.forEach(function (coord) {
@@ -956,3 +960,22 @@ define([
     return GEOQA;
 })
 ;
+
+function getCoords(i){
+    i=JSON.stringify(i);
+    i=i.match(/\[([*-9]+)\]/g );
+    i=i.join();
+    i=i.replace(/\[/g, '');
+    i=i.replace(/\]/g, '');
+    i=i.split(",");
+
+    var c=[];
+    for(var x=0;x<i.length;x=x+2){
+        c.push([Number(i[x]),Number(i[x+1])])
+    }
+    return c;
+}
+String.prototype.replaceAll = function(search, replacement) {
+    var target = this;
+    return target.replace(new RegExp(search, 'g'), replacement);
+};

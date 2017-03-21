@@ -35,6 +35,11 @@ public class Utility {
                             estremi.xUpRight = Double.valueOf(st.nextToken());
                             estremi.yUpRight = Double.valueOf(st.nextToken());
                             mappa.setEstremi(estremi);
+                            System.out.println("Estremi: ");
+                            System.out.println(estremi.xLowLeft);
+                            System.out.println(estremi.yLowLeft);
+                            System.out.println(estremi.xUpRight);
+                            System.out.println(estremi.yUpRight);
                         } else if ((num_Token == 2) || (num_Token == 3)) {
                             token = st.nextToken();
                             if (token.startsWith("P") || token.startsWith("L") || token.startsWith("A") || token.startsWith("S")) {

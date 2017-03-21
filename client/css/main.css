@@ -268,7 +268,7 @@ button#addAssociation {
 
 #banner {
     width: 100%;
-    height: 80px;
+    height: 100px;
     background-color: white;
     text-align: center;
     line-height: 80px;
@@ -430,7 +430,7 @@ hr {
 }
 
 .btn-group>.btn:last-child:not(:first-child), .btn-group>.dropdown-toggle:not(:first-child) {
-    border-radius: 6px !important;;
+    border-radius: 6px !important;
 }
 button#addTag {
     margin-top: 10px;
@@ -448,7 +448,7 @@ ul{
     /* font-weight: bolder; */
 }
 ol:before {
-    content: "•";
+    content: "â€¢";
     padding-right: 10px;
 }
 
@@ -463,6 +463,13 @@ li{
     list-style-type: none;
 }
 li:before {
-    content: "●";
     padding-right: 10px;
+}
+.name {
+    width: 50%;
+    float: left;
+    text-align: center;
+}
+.form-control[disabled], fieldset[disabled] .form-control {
+    cursor: auto;
 }
