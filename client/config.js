@@ -1,8 +1,8 @@
 var CONFIG={
     homologousURL: 'http://131.175.59.195:8080/GEOQA-0.1.0/getHomologus',//"http://localhost:8080/getHomologus",  // "http://131.175.143.84/geo/getHomologus",
-    homologousURL_local: "http://localhost:8081/getHomologus",
+    homologousURL_local: "http://localhost:8082/getHomologusAndMap",
     getMapURL: 'http://131.175.59.195:8080/GEOQA-0.1.0/send',//"http://localhost:8080/send", // "http://131.175.143.84/geo/send",
-    getMapURL_local: "http://localhost:8081/send",
+    getMapURL_local: "http://localhost:8082/send",
     OGRE: 'http://ogre.adc4gis.com/convert',
     OVERPASS: 'http://overpass-api.de/api/interpreter',
     GEOSERVER: 'http://131.175.59.195/geoserver/',//http://131.175.143.51/geoserver/',//,http://127.0.0.1/geoserver/'

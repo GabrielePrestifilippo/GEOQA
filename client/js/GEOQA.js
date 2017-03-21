@@ -6,8 +6,6 @@ define([
     'js/GeoHelper',
     'leaflet-vector',
     'js/proj4',
-    'js/lib/bootbox.min',
-    'js/QuadTree',
     'leaflet-marker',
     'bootstrap-select',
     'leaflet-areaselect',
@@ -17,7 +15,7 @@ define([
     'config'
 
 
-], function ($, bootstrap, osmtogeojson, L, GeoHelper, LeafletVectorGridbundled, proj4, bootbox) {
+], function ($, bootstrap, osmtogeojson, L, GeoHelper, LeafletVectorGridbundled, proj4) {
     var GEOQA = function (UI) {
         this.markers1 = {
             markers: [],
@@ -127,7 +125,7 @@ define([
             formData.append('attributes', attributes);
         }
 
-        var promise = new Promise(function (resolve) {
+        var promise = new Promise(function (resolvePost) {
             $.ajax({
                 url: CONFIG.homologousURL(),
                 type: "POST",
@@ -136,8 +134,16 @@ define([
                 processData: false,
                 contentType: false,
                 cache: false,
-                success: function (res) {
-                    resolve(res);
+                success: function (resPost) {
+
+                    var promiseAfter = new Promise(function (resolvingMap) {
+                        resolvePost([resPost, resolvingMap]);
+                    });
+                    promiseAfter.then(function (responseProime) {
+                        afterMap(self, resPost);
+                    });
+
+
                 },
                 error: function (e) {
                     console.log(e);
@@ -145,9 +151,11 @@ define([
             });
         });
 
-        promise.then(function (res) {
+        promise.then(function (params) { //resolvePost
+            var [res, resolvingMap]= params;
             var resultParam = res.statistics.split("\n")[1].split(";");
             self.UI.showStatistics(resultParam);
+
             self.helper.cleanAllMarkers();
             var marker1 = self.convertPoints(res.resultPoints); //get all points
             var marker2 = self.convertPoints(res.resultPoints1);
@@ -177,15 +185,19 @@ define([
                 var distanceHomologous = marker.distance;
                 var color = self.helper.getColor(((distanceHomologous - minDistance) / (maxDistance - minDistance)) * 100, colors);
 
-                self.helper.insertMarker(self.map1, marker.x, marker.y, (i + 1), self.markers1, "map1", color);
+                self.helper.insertMarker(self.map1, marker.x, marker.y, (i + 1), self.markers1, "map1", color, 1);
             });
             markerLeaflet2.forEach(function (marker, i) {
                 var distanceHomologous = marker.distance;
                 var color = self.helper.getColor(((distanceHomologous - minDistance) / (maxDistance - minDistance)) * 100, colors);
-                self.helper.insertMarker(self.map2, marker.x, marker.y, (i + 1), self.markers2, "map2", color);
+                self.helper.insertMarker(self.map2, marker.x, marker.y, (i + 1), self.markers2, "map2", color, 1);
             });
 
             $("#loading").hide();
+
+            self.map1.setZoom(12);
+            self.map2.setZoom(12);
+            resolvingMap(); //resolve promise of homologous
 
         });
     };
@@ -206,16 +218,16 @@ define([
             if (typeof(ob) == "object" && typeof(ob[0]) == "number") {
                 arr.push([ob[0], ob[1]]);
             } else if (typeof(ob) == "object" && typeof(ob[0]) == "object" && typeof(ob[0][0]) == "number") {
-                var subArray=[];
-                subArray.type=type;
-                subArray.letterType=letterType;
+                var subArray = [];
+                subArray.type = type;
+                subArray.letterType = letterType;
                 arr.push(subArray);
                 ob.forEach(function (insideOb) {
-                    searchAndFill(insideOb, subArray,  type, letterType)
+                    searchAndFill(insideOb, subArray, type, letterType)
                 })
             } else {
                 ob.forEach(function (insideOb) {
-                    searchAndFill(insideOb, arr,  type, letterType)
+                    searchAndFill(insideOb, arr, type, letterType)
                 })
             }
         }
@@ -224,48 +236,48 @@ define([
         var letterType;
         //for each feature of the json
 
-            jsonData.features.forEach(function (features, index) {
-                if (!features.geometry || !features.geometry.type) {
-                    return;
-                }
+        jsonData.features.forEach(function (features, index) {
+            if (!features.geometry || !features.geometry.type) {
+                return;
+            }
 
-                //arrayList[index] = [];
-                myProp = type; //assign a properties to each feature, initialize it to a number (0,1->map0, map1)
+            //arrayList[index] = [];
+            myProp = type; //assign a properties to each feature, initialize it to a number (0,1->map0, map1)
 
-                if (features.geometry.type == "Polygon" || features.geometry.type == "MultiPolygon") {
-                    letterType = "A";
-                } else {
-                    letterType = "L";
-                }
+            if (features.geometry.type == "Polygon" || features.geometry.type == "MultiPolygon") {
+                letterType = "A";
+            } else {
+                letterType = "L";
+            }
 
-                //retrieve all the coordinates for the selected feature and put the in the arrayList
-                searchAndFill(features.geometry.coordinates, arrayList, type, letterType);
+            //retrieve all the coordinates for the selected feature and put the in the arrayList
+            searchAndFill(features.geometry.coordinates, arrayList, type, letterType);
 
-                //if the feature has properties
-                if (features.properties) {
-                    //for each property
-                    for (var objKey in features.properties) {
-                        if (!features.properties[objKey]) { //check if some properties are null
-                            return
-                        }
-                        //for each available attribute, got from the association list:
-                        for (var a = 0; a < attributes.length; a++) {
-                            //try to get a key-value pair splitting the attribute over ":", it is the OSM case
-                            var [myKey, myVal] = attributes[a][type].split(":");
-                            //if key-val are found, so we have a OSM attributes
-                            if (myVal && features.properties[objKey][myKey] && features.properties[objKey][myKey] == myVal) {
-                                arrayList[index].myProp = myKey + ":" + myVal;
-                                //set the property of the current feature to key:val
-                                return;
-                            } else if (!myVal && features.properties[objKey] == myKey) {
-                                //if we have just an attribute not in the form key:val, we simply set the value
-                                arrayList[index].myProp = myKey;
-                                return;
-                            }
+            //if the feature has properties
+            if (features.properties) {
+                //for each property
+                for (var objKey in features.properties) {
+                    if (!features.properties[objKey]) { //check if some properties are null
+                        return
+                    }
+                    //for each available attribute, got from the association list:
+                    for (var a = 0; a < attributes.length; a++) {
+                        //try to get a key-value pair splitting the attribute over ":", it is the OSM case
+                        var [myKey, myVal] = attributes[a][type].split(":");
+                        //if key-val are found, so we have a OSM attributes
+                        if (myVal && features.properties[objKey][myKey] && features.properties[objKey][myKey] == myVal) {
+                            arrayList[index].myProp = myKey + ":" + myVal;
+                            //set the property of the current feature to key:val
+                            return;
+                        } else if (!myVal && features.properties[objKey] == myKey) {
+                            //if we have just an attribute not in the form key:val, we simply set the value
+                            arrayList[index].myProp = myKey;
+                            return;
                         }
                     }
                 }
-            });
+            }
+        });
 
         //we fill the car file, by putting the extent in the first line
         var carString = jsonData.extent;
@@ -408,32 +420,37 @@ define([
         });
 
         promise.then(function (res) {
-            var geo = self.createJSON(res);
-            var resultParam = res.statistics.split("\n")[1].split(";");
-            var markers = self.convertPoints(res.resultPoints);
-            self.helper.cleanResultMarkers();
-
-            self.getResultMap(geo, resultParam);
-            var color = "#378bcc";
-            markers.forEach(function (marker, i) {
-                color = self.markers2.lMarkers[i].color;
-                var m1 = new L.marker([marker[0], marker[1]], {
-                    icon: new L.DivIcon({
-                        className: "number-icon",
-                        iconSize: [25, 41],
-                        iconAnchor: [12, 43],
-                        html: i + 1 + '<br><i class="fa fa-thumb-tack iconMarker" style="color:' + color + '" aria-hidden="true"></i>'
-                    }),
-                    message: "Marker " + Number(i + 1)
-                });
-
-                self.markersResult.push(m1);
-                self.resultMap.cluster.addLayer(m1);
-            });
-
+            afterMap(self, res);
         });
-
     };
+
+    function afterMap(self, res) {
+        var geo = self.createJSON(res);
+        var resultParam = res.statistics.split("\n")[1].split(";");
+
+
+        self.getResultMap(geo, resultParam);
+        /*
+         var markers = self.convertPoints(res.resultPoints);
+         self.helper.cleanResultMarkers();
+         var color = "#378bcc";
+         markers.forEach(function (marker, i) {
+         color = self.markers2.lMarkers[i].color;
+         var m1 = new L.marker([marker[0], marker[1]], {
+         icon: new L.DivIcon({
+         className: "number-icon",
+         iconSize: [25, 41],
+         iconAnchor: [12, 43],
+         html: i + 1 + '<br><i class="fa fa-thumb-tack iconMarker" style="color:' + color + '" aria-hidden="true"></i>'
+         }),
+         message: "Marker " + Number(i + 1)
+         });
+
+         self.markersResult.push(m1);
+         self.resultMap.cluster.addLayer(m1);
+         });
+         */
+    }
 
     /**
      * Insert the result map on the client
@@ -465,11 +482,11 @@ define([
                             return {
                                 fillColor: '#66ff66',
                                 fillOpacity: 1,
-                                stroke: true,
+                                stroke: false,
                                 fill: true,
                                 color: 'red',
-                                strokeOpacity: 2,
-                                weight: 1
+                                strokeOpacity: 0,
+                                weight: 0
                             }
                         }
                     },
@@ -613,7 +630,7 @@ define([
         }
         vectorGrid.addTo(map);
         var temp = L.geoJson(data);
-
+        var allCoords = getCoords(data);
         if (map._container.id == "map1") {
             this.jsonMap1 = data;
             this.lMap1 = vectorGrid;
@@ -622,13 +639,6 @@ define([
             var res1 = proj4('WGS84', self.projection, [temp.getBounds()._northEast.lng, temp.getBounds()._northEast.lat]);
             this.jsonMap1.extent = res[0] + " " + res[1] + " " + res1[0] + " " + res1[1];
             this.UI.addPropToMenu(1, this.jsonMap1.prop);
-            var allCoords = [];
-
-            data.features.forEach(function (f) {
-                if (f.geometry && f.geometry.coordinates && f.geometry.coordinates.length > 0)
-                    allCoords = allCoords.concat(self.helper.pushCoords(f.geometry.coordinates));
-
-            });
 
             this.jsonMap1.coords = allCoords;
 
@@ -642,12 +652,6 @@ define([
             this.UI.addPropToMenu(2, this.jsonMap2.prop);
 
 
-            var allCoords = [];
-            data.features.forEach(function (f) {
-                if (f.geometry && f.geometry.coordinates && f.geometry.coordinates.length > 0)
-                    allCoords = allCoords.concat(self.helper.pushCoords(f.geometry.coordinates));
-
-            });
             this.jsonMap2.coords = allCoords;
 
         }
@@ -745,7 +749,7 @@ define([
         map.over.addOverlay(vectorGrid, "Vector layer" + map.over._layers.length);
 
         map.fitBounds(temp.getBounds());
-        map.setZoom(14);
+        map.setZoom(13);
         map.fitBounds(temp.getBounds());
 
     };
@@ -828,3 +832,21 @@ define([
     return GEOQA;
 })
 ;
+function getCoords(i) {
+    i = JSON.stringify(i);
+    i = i.match(/\[([*-9]+)\]/g);
+    i = i.join();
+    i = i.replace(/\[/g, '');
+    i = i.replace(/\]/g, '');
+    i = i.split(",");
+
+    var c = [];
+    for (var x = 0; x < i.length; x = x + 2) {
+        c.push([Number(i[x]), Number(i[x + 1])])
+    }
+    return c;
+}
+String.prototype.replaceAll = function (search, replacement) {
+    var target = this;
+    return target.replace(new RegExp(search, 'g'), replacement);
+};

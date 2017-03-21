@@ -71,21 +71,33 @@ public class PostController {
 		test.setParams(angolo, sigma, distanza, iterazioni);
 		test.setSource(layer1.getBytes(),points1.getBytes());
 		test.setTarget(layer2.getBytes(),points2.getBytes());
-		/*
-		TabellaRelazioneLivelli tabellaRelazioneLivelli=null;
-		if(attributes!=null){
-			tabellaRelazioneLivelli=new TabellaRelazioneLivelli();
-			for(int i=0;i<attributes.size()/2;i++){
-				tabellaRelazioneLivelli.aggiungiRelazione(attributes.get(i),attributes.get(i+1));
-			}
-		}
-		test.setTabellaRelazioneLivelli(tabellaRelazioneLivelli);
-		*/
+
 		String result = test.getHomologus();
-		
 		return ResponseEntity.ok().body(result);
 	}
 
+
+	@ResponseBody
+	@CrossOrigin
+	@RequestMapping(value = "getHomologusAndMap", method = RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<String> getHomologusAndMap(
+			@RequestParam("layer1") MultipartFile layer1, @RequestParam("layer2") MultipartFile layer2,
+			@RequestParam("points1") MultipartFile points1, @RequestParam("points2") MultipartFile points2,
+			@RequestParam(value = "angolo", required = false) Double angolo,
+			@RequestParam(value = "sigma", required = false) Double sigma,
+			@RequestParam(value = "distanza", required = false) Double distanza,
+			@RequestParam(value = "iterazioni", required = false) Integer iterazioni//,
+			//@RequestParam(value = "attributes", required = false) List<String> attributes
+	) throws IOException {
+
+		SoftwareMain test = new SoftwareMain();
+		test.setParams(angolo, sigma, distanza, iterazioni);
+		test.setSource(layer1.getBytes(),points1.getBytes());
+		test.setTarget(layer2.getBytes(),points2.getBytes());
+
+		String result = test.getHomologusAndMap();
+		return ResponseEntity.ok().body(result);
+	}
 
 @ResponseBody
 @CrossOrigin

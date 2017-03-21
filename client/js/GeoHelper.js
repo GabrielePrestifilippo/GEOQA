@@ -61,49 +61,29 @@ define(['js/lib/bootbox.min'], function (bootbox) {
     };
 
     GeoHelper.prototype.download = function (strData, strFileName, strMimeType) {
-
-        var D = document,
-            A = arguments,
-            a = D.createElement("a"),
-            d = A[0],
-            n = A[1],
-            t = A[2] || "text/plain";
-
-        //build download link:
-        a.href = "data:" + strMimeType + "charset=utf-8," + escape(strData);
+        var createObjectURL = (window.URL || window.webkitURL || {}).createObjectURL || function(){};
+        var blob = null;
+        var content = strData;
+        var mimeString = "application/octet-stream";
+        window.BlobBuilder = window.BlobBuilder ||
+            window.WebKitBlobBuilder ||
+            window.MozBlobBuilder ||
+            window.MSBlobBuilder;
 
 
-        if (window.MSBlobBuilder) { // IE10
-            var bb = new MSBlobBuilder();
-            bb.append(strData);
-            return navigator.msSaveBlob(bb, strFileName);
+        if(window.BlobBuilder){
+            var bb = new BlobBuilder();
+            bb.append(content);
+            blob = bb.getBlob(mimeString);
+        }else{
+            blob = new Blob([content], {type : mimeString});
         }
-        /* end if(window.MSBlobBuilder) */
-
-
-        if ('download' in a) { //FF20, CH19
-            a.setAttribute("download", n);
-            a.innerHTML = "downloading...";
-            D.body.appendChild(a);
-            setTimeout(function () {
-                var e = D.createEvent("MouseEvents");
-                e.initMouseEvent("click", true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
-                a.dispatchEvent(e);
-                D.body.removeChild(a);
-            }, 66);
-            return true;
-        }
-
-        /* end if('download' in a) */
-
-
-        //do iframe dataURL download: (older W3)
-        var f = D.createElement("iframe");
-        D.body.appendChild(f);
-        f.src = "data:" + (A[2] ? A[2] : "application/octet-stream") + (window.btoa ? ";base64" : "") + "," + (window.btoa ? window.btoa : escape)(strData);
-        setTimeout(function () {
-            D.body.removeChild(f);
-        }, 333);
+        var url = createObjectURL(blob);
+        var a = document.createElement("a");
+        a.href = url
+        a.download = "resultMap.geojson";
+        a.innerHTML = "Download Ready!";
+        $("#downloadButton").appendChild(a);
         return true;
     };
     GeoHelper.prototype.removeMarker = function (tempMarker, mainMarkers, oppositeMarkers, map, otherMap) {
@@ -219,7 +199,7 @@ define(['js/lib/bootbox.min'], function (bootbox) {
         return 'rgb(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ')';
     };
 
-    GeoHelper.prototype.insertMarker = function (map, lat, lng, markerNumber, mainMarkers, mapNumber, color) {
+    GeoHelper.prototype.insertMarker = function (map, lat, lng, markerNumber, mainMarkers, mapNumber, color, fast) {
         var self = this;
         if (!color) {
             color = 'rgb(14, 88, 202)';
@@ -233,17 +213,21 @@ define(['js/lib/bootbox.min'], function (bootbox) {
                 }),
                 message: "Marker " + Number(markerNumber + 1)
             }
-        ).bindPopup("Marker " + Number(markerNumber + 1) + "<br><input type='button' value='Remove' class='btn btn-danger marker-delete-button'/>");
+        );
 
         if (mainMarkers) {
             mainMarkers.cluster.addLayer(m1);
-            m1.on("popupopen", onPopupOpen);
             m1.indexMarker = Number(markerNumber + 1);
             m1.color = color;
-            var inserted = mainMarkers.lMarkers.splice(markerNumber, 0, m1);
-            mainMarkers.markers.splice(markerNumber, 0, [lat, lng]);
+            if(!fast) {
+                m1.bindPopup("Marker " + Number(markerNumber + 1) + "<br><input type='button' value='Remove' class='btn btn-danger marker-delete-button'/>");
+                m1.on("popupopen", onPopupOpen);
+                mainMarkers.lMarkers.splice(markerNumber, 0, m1);
+                mainMarkers.markers.splice(markerNumber, 0, [lat, lng]);
+            }
         }
-        if (mapNumber) {
+
+        if (mapNumber && !fast) {
             this.addMarkerToInterface(m1, markerNumber, mapNumber);
         }
         function onPopupOpen() {
@@ -274,6 +258,7 @@ define(['js/lib/bootbox.min'], function (bootbox) {
                 })
             });
         }
+
     };
     return GeoHelper;
 });

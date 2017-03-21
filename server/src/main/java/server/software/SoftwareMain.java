@@ -269,6 +269,104 @@ public class SoftwareMain {
         return toSend;
     }
 
+    public String getHomologusAndMap() throws IOException {
+
+        Mappa source = this.source;
+        Mappa target = this.target;
+
+        System.out.println(new Statistiche(source.getPuntiOmologhi(), target.getPuntiOmologhi()).stampa());
+
+        int numeroIterazioni = this.iterazioni;
+        double angolo = this.angolo * Math.PI / 180;
+        double sigma = this.sigma;
+        double distanzaMax = this.distanza;
+        TabellaRelazioneLivelli tabellaRelazioneLivelli = this.tabellaRelazioneLivelli;
+
+        String outputTrasfAffine = this.stimaAffine(source, target, numeroIterazioni, angolo, sigma, distanzaMax, tabellaRelazioneLivelli, true);
+        System.out.println(outputTrasfAffine);
+
+        byte[] resultMap = Utility.salva(source);
+        byte[] resultPoints = source.omologhiBeforeTransformation;
+        byte[] resultPoints1 = target.omologhiBeforeTransformation;
+
+
+        ResultJSON response = new ResultJSON();
+        String statistiche = new Statistiche(source.getPuntiOmologhi(), target.getPuntiOmologhi()).stampa();
+        System.out.println(statistiche);
+
+        response.setStatistics(statistiche);
+
+        String points = "";
+        InputStream is = null;
+        is = new ByteArrayInputStream(resultPoints);
+        BufferedReader br = new BufferedReader(new InputStreamReader(is));
+        try {
+            StringBuilder sb = new StringBuilder();
+            String line = br.readLine();
+
+            while (line != null) {
+                sb.append(line);
+                sb.append(System.lineSeparator());
+                line = br.readLine();
+            }
+            points = sb.toString();
+        } finally {
+            br.close();
+        }
+
+        String points1 = "";
+        is = null;
+        is = new ByteArrayInputStream(resultPoints1);
+        br = new BufferedReader(new InputStreamReader(is));
+        try {
+            StringBuilder sb = new StringBuilder();
+            String line = br.readLine();
+
+            while (line != null) {
+                sb.append(line);
+                sb.append(System.lineSeparator());
+                line = br.readLine();
+            }
+            points1 = sb.toString();
+        } finally {
+            br.close();
+        }
+
+
+        String map = "";
+        is = null;
+        is = new ByteArrayInputStream(resultMap);
+        br = new BufferedReader(new InputStreamReader(is));
+        try {
+
+            StringBuilder sb = new StringBuilder();
+            String line = br.readLine();
+
+            while (line != null) {
+                sb.append(line);
+                sb.append(System.lineSeparator());
+                line = br.readLine();
+            }
+            map = sb.toString();
+        } finally {
+            br.close();
+        }
+
+
+        response.setPoints(points);
+        response.setPoints1(points1);
+        response.setResultMap(map);
+
+        Gson gson = new Gson();
+
+        String toSend = gson.toJson(response);
+
+        return toSend;
+    }
+
+
+
+
     public String execute() throws IOException {
 
         Mappa source = this.source;
