@@ -81,9 +81,10 @@ define(['js/lib/bootbox.min'], function (bootbox) {
         var url = createObjectURL(blob);
         var a = document.createElement("a");
         a.href = url
-        a.download = "resultMap.geojson";
+        a.download = strFileName;
         a.innerHTML = "Download Ready!";
-        $("#downloadButton").appendChild(a);
+        $("#downloadContent").html(a);
+        $("#downloadContent").children()[0].click();
         return true;
     };
     GeoHelper.prototype.removeMarker = function (tempMarker, mainMarkers, oppositeMarkers, map, otherMap) {

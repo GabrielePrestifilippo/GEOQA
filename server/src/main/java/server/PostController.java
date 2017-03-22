@@ -96,6 +96,7 @@ public class PostController {
 		test.setTarget(layer2.getBytes(),points2.getBytes());
 
 		String result = test.getHomologusAndMap();
+		System.gc();
 		return ResponseEntity.ok().body(result);
 	}
 

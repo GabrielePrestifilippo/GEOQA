@@ -21,7 +21,7 @@ define([
             markers: [],
             lMarkers: [],
             cluster: L.markerClusterGroup({
-                disableClusteringAtZoom: 18
+                disableClusteringAtZoom: 20
             }),
             missing: []
         };
@@ -29,7 +29,7 @@ define([
             markers: [],
             lMarkers: [],
             cluster: L.markerClusterGroup({
-                disableClusteringAtZoom: 18
+                disableClusteringAtZoom: 20
             }),
             missing: []
         };
@@ -110,8 +110,10 @@ define([
         var self = this;
         var l1 = this.toCar(this.jsonMap1, attributes, 0);
         var l2 = this.toCar(this.jsonMap2, attributes, 1);
-        var p1 = this.toOmo(this.markers1.markers);
-        var p2 = this.toOmo(this.markers2.markers);
+        var m1=this.markers1.markers;
+        var m2=this.markers2.markers;
+        var p1 = this.toOmo(m1);
+        var p2 = this.toOmo(m2);
         var formData = new FormData();
         formData.append('layer1', new File([new Blob([l1])], "OSM00"));
         formData.append('layer2', new File([new Blob([l2])], "DBT00"));
@@ -124,7 +126,8 @@ define([
         if (attributes.length) {
             formData.append('attributes', attributes);
         }
-
+        this.helper.download(JSON.stringify(m1),"REFERENCE_homologous_init.txt");
+        this.helper.download(JSON.stringify(m1),"TARGET_homologous_init.txt");
         var promise = new Promise(function (resolvePost) {
             $.ajax({
                 url: CONFIG.homologousURL(),
@@ -139,7 +142,7 @@ define([
                     var promiseAfter = new Promise(function (resolvingMap) {
                         resolvePost([resPost, resolvingMap]);
                     });
-                    promiseAfter.then(function (responseProime) {
+                    promiseAfter.then(function () {
                         afterMap(self, resPost);
                     });
 
@@ -156,9 +159,14 @@ define([
             var resultParam = res.statistics.split("\n")[1].split(";");
             self.UI.showStatistics(resultParam);
 
-            self.helper.cleanAllMarkers();
             var marker1 = self.convertPoints(res.resultPoints); //get all points
             var marker2 = self.convertPoints(res.resultPoints1);
+
+            self.helper.download(JSON.stringify(marker1),"REFERENCE_homologous_post.txt");
+            self.helper.download(JSON.stringify(marker2),"TARGET_homologous_post.txt");
+            /*
+            self.helper.cleanAllMarkers();
+
 
             var markerLeaflet1 = [], markerLeaflet2 = [];
             var minDistance = Infinity;
@@ -192,7 +200,7 @@ define([
                 var color = self.helper.getColor(((distanceHomologous - minDistance) / (maxDistance - minDistance)) * 100, colors);
                 self.helper.insertMarker(self.map2, marker.x, marker.y, (i + 1), self.markers2, "map2", color, 1);
             });
-
+*/
             $("#loading").hide();
 
             self.map1.setZoom(12);
@@ -589,6 +597,7 @@ define([
         resultMap.invalidateSize();
         resultMap.setView(new L.LatLng(lat, lng), 16);
         this.UI.showStatistics(resultParam);
+        $("#downloadButton").show();
         $("#loading").hide();
     };
 
@@ -630,7 +639,7 @@ define([
         }
         vectorGrid.addTo(map);
         var temp = L.geoJson(data);
-        var allCoords = getCoords(data);
+        var allCoords = this.getCoords(data);
         if (map._container.id == "map1") {
             this.jsonMap1 = data;
             this.lMap1 = vectorGrid;
@@ -829,23 +838,58 @@ define([
             }
         });
     };
+
+
+    GEOQA.prototype.getCoords = function(i){
+        i = JSON.stringify(i);
+        i = i.match(/\[([*-9]+)\]/g);
+        i = i.join();
+        i = i.replace(/\[/g, '');
+        i = i.replace(/\]/g, '');
+        i = i.split(",");
+
+        var c = [];
+        for (var x = 0; x < i.length; x = x + 2) {
+            c.push([Number(i[x]), Number(i[x + 1])])
+        }
+        return c;
+    };
+
+
+    GEOQA.prototype.loadCoords = function(a,b){
+      //  var a=[[45.49771957212775,9.112296786462249],[45.49787501891305,9.112893293539399],[45.497956467792406,9.112984970881437],[45.51269469238803,9.254884354425768],[45.51259087154552,9.254897736870701],[45.51273779946706,9.254677401757101],[45.43175401236009,9.248292293979846],[45.43149944990296,9.248719707183495],[45.431343725977165,9.248531400036715],[45.43849521561157,9.127848821239239],[45.43867648052525,9.127704893880166],[45.43876018074679,9.12788148909149],[45.46477981036893,9.19132451519824],[45.46478442319138,9.19081293306342],[45.46490950532482,9.190671842332836],[45.452929056968685,9.143290585475107],[45.45305095687032,9.14455782657621],[45.45284513335531,9.144469630638627],[45.500228184226835,9.18850485516794],[45.50034102525048,9.187978800943],[45.47209289756637,9.235755330576627],[45.47162527228278,9.236019236857613],[45.47220552617896,9.235642572052036],[45.434996633987005,9.184929440697836],[45.43499809161478,9.184713949119578]];
+
+       // var b=[[45.49772073240106,9.112298067515155],[45.49787554615267,9.11288404636602],[45.497977973009455,9.112982030814123],[45.512703468142746,9.254900894948747],[45.512581176175445,9.254915479460266],[45.512755687399505,9.254693945759385],[45.43175833954871,9.248296458162201],[45.431503026778046,9.248723767585972],[45.43134628518868,9.24853349838395],[45.43848615794997,9.127863680803529],[45.43868195920808,9.127700066053592],[45.43876091673599,9.127855634176484],[45.464783289509455,9.191340168812701],[45.46478857010845,9.190828034528778],[45.464922596740195,9.190696773925083],[45.45293136224112,9.143300883335286],[45.45305457621777,9.144562359762915],[45.45285374581775,9.144478289274076],[45.50022683763089,9.188508929558736],[45.50033915513342,9.187986820810067],[45.472095326561885,9.235752856244005],[45.47162476651772,9.236030632515167],[45.472208733711824,9.23561958398355],[45.43498595900374,9.184950727842562],[45.43498973086017,9.184700947127993]];
+
+
+        a.forEach(function(coords,index){
+
+            var e1={};
+            e1.latlng={};
+            e1.latlng.lat=a[index][0];
+            e1.latlng.lng=a[index][1];
+            e1.target={};
+            e1.target._container={};
+            e1.target._container.id="map1";
+
+
+            var e2={};
+            e2.latlng={};
+            e2.latlng.lat=b[index][0];
+            e2.latlng.lng=b[index][1];
+            e2.target={};
+            e2.target._container={};
+            e2.target._container.id="map2";
+
+            this.map1.listenerClick(e1);
+            this.map2.listenerClick(e2);
+        });
+
+    };
     return GEOQA;
 })
 ;
-function getCoords(i) {
-    i = JSON.stringify(i);
-    i = i.match(/\[([*-9]+)\]/g);
-    i = i.join();
-    i = i.replace(/\[/g, '');
-    i = i.replace(/\]/g, '');
-    i = i.split(",");
 
-    var c = [];
-    for (var x = 0; x < i.length; x = x + 2) {
-        c.push([Number(i[x]), Number(i[x + 1])])
-    }
-    return c;
-}
 String.prototype.replaceAll = function (search, replacement) {
     var target = this;
     return target.replace(new RegExp(search, 'g'), replacement);
