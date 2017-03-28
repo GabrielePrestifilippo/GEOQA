@@ -292,9 +292,9 @@ public class SoftwareMain {
         String statistiche = new Statistiche(source.getPuntiOmologhi(), target.getPuntiOmologhi()).stampa();
         System.out.println(statistiche);
         try {
-            byte[] resultPoints = Utility.salvaOmologhi(source);
+            resultPoints = Utility.salvaOmologhi(source);
             source.omologhiBeforeTransformation = resultPoints;
-            byte[] resultPoints1 = Utility.salvaOmologhi(target);
+            resultPoints1 = Utility.salvaOmologhi(target);
             target.omologhiBeforeTransformation = resultPoints1;
         } catch (IOException e) {
             e.printStackTrace();

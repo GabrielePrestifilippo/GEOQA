@@ -688,7 +688,7 @@ define([
                 var res = proj4('WGS84', self.projection, [temp.getBounds()._southWest.lng, temp.getBounds()._southWest.lat]);
                 var res1 = proj4('WGS84', self.projection, [temp.getBounds()._northEast.lng, temp.getBounds()._northEast.lat]);
                 this.jsonMap1.extent = res[0] + " " + res[1] + " " + res1[0] + " " + res1[1];
-                this.UI.addPropToMenu(1, this.jsonMap1.prop);
+               // this.UI.addPropToMenu(1, this.jsonMap1.prop);
 
                 this.jsonMap1.coords = allCoords;
 
@@ -699,7 +699,7 @@ define([
                 var res = proj4('WGS84', self.projection, [temp.getBounds()._southWest.lng, temp.getBounds()._southWest.lat]);
                 var res1 = proj4('WGS84', self.projection, [temp.getBounds()._northEast.lng, temp.getBounds()._northEast.lat]);
                 this.jsonMap2.extent = res[0] + " " + res[1] + " " + res1[0] + " " + res1[1];
-                this.UI.addPropToMenu(2, this.jsonMap2.prop);
+               // this.UI.addPropToMenu(2, this.jsonMap2.prop);
 
 
                 this.jsonMap2.coords = allCoords;
