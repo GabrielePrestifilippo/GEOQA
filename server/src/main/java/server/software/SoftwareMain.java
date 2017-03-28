@@ -135,17 +135,12 @@ public class SoftwareMain {
                 risultato.set(numeroIterazione, c, parametriStimati.get(c));
             }
             risultato.set(numeroIterazione, 6, source.getNumeroPuntiOmologhi());
-            try {
-                byte[] resultPoints = Utility.salvaOmologhi(source);
-                source.omologhiBeforeTransformation = resultPoints;
-                byte[] resultPoints1 = Utility.salvaOmologhi(target);
-                target.omologhiBeforeTransformation = resultPoints1;
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            //OLD
             output = Mappa.creaCopia(source, "");
             Trasforma.conAffine(output, parametriStimati);
             risultato.set(numeroIterazione, 7, Stima.getVettoreScarti(output.getPuntiOmologhi(), target.getPuntiOmologhi()).stimaVarianza(6));
+
+
 
             if (transform) {
                 if (tabellaRelazioneLivelli != null) {
@@ -154,6 +149,8 @@ public class SoftwareMain {
                     Stima.FischerGeometrico(source, target, output, angolo, sigma, distanzaMax);
                 }
             }
+
+
             numeroIterazione++;
             if (source.getNumeroPuntiOmologhi() < 5) {
                 ripeti = false;
@@ -176,6 +173,7 @@ public class SoftwareMain {
 
 
     public void setSource(byte[] source, byte[] omologhi) {
+
         this.source = this.leggiMappa(source, omologhi);
     }
 
@@ -293,7 +291,14 @@ public class SoftwareMain {
         ResultJSON response = new ResultJSON();
         String statistiche = new Statistiche(source.getPuntiOmologhi(), target.getPuntiOmologhi()).stampa();
         System.out.println(statistiche);
-
+        try {
+            byte[] resultPoints = Utility.salvaOmologhi(source);
+            source.omologhiBeforeTransformation = resultPoints;
+            byte[] resultPoints1 = Utility.salvaOmologhi(target);
+            target.omologhiBeforeTransformation = resultPoints1;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         response.setStatistics(statistiche);
 
         String points = "";

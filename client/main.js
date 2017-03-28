@@ -70,6 +70,20 @@ define(['js/GEOQA', 'jquery', 'leaflet', 'js/GeoUI', 'bootstrapSlider', 'js/lib/
          */
 
 
+        $("#verifyPoints").click(function () {
+            var res = self.verifyPoints();
+            if (res <= 0)
+                return
+            var tempDiv = "Distance of points over Affine transformation:<br>";
+            var index = 1;
+            for (var x = 0; x < res.length; x = x + 2) {
+                tempDiv += "<div class ='cardinality'>Point " + index + ": </div>" +
+                    "<div class='percentage'>" + res[x] + "% - " + res[x + 1] + "%</div><br>";
+                    index++;
+            }
+            $("#pointsVerification").html(tempDiv);
+        });
+
         $('#importFile').click(function () {
 
             self.UI.closeMenu();

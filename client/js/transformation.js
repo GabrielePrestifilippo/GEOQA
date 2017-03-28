@@ -1,12 +1,15 @@
 var Transformation = {};
 
 Transformation.setPoints = function (coord, coord2) {
-    y0 = [];
+    var y0 = [];
+
     coord.forEach(function (c) {
         y0.push(c[0], c[1]);
     });
 
     var columns = [[], [], [], [], [], []];
+
+
     for (var x = 0; x < coord2.length; x++) {
         columns[0].push(coord2[x][0]);
         columns[0].push(0);
@@ -20,15 +23,13 @@ Transformation.setPoints = function (coord, coord2) {
         columns[3].push(0);
         columns[3].push(coord2[x][0]);
 
-
         columns[4].push(0);
         columns[4].push(coord2[x][1]);
 
-
         columns[5].push(0);
         columns[5].push(1);
-
     }
+
     var A = columns;
     A = math.transpose(A);
 

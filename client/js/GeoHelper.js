@@ -3,7 +3,7 @@ define(['js/lib/bootbox.min'], function (bootbox) {
         this.app = parent;
     };
 
-    GeoHelper.prototype.cleanAllMarkers = function () {
+    GeoHelper.prototype.cleanAllMarkers = function (min, max) {
         var self = this.app;
         var i;
 
@@ -23,9 +23,39 @@ define(['js/lib/bootbox.min'], function (bootbox) {
         self.markers1.lMarkers = [];
         self.markers1.missing = [];
         self.map1.removeLayer(self.markers1.cluster);
-        self.markers1.cluster = L.markerClusterGroup({
-            disableClusteringAtZoom: 18
-        });
+        if (max) {
+            var colors = [[51, 159, 255], [10, 10, 10]];
+            self.markers1.cluster = L.markerClusterGroup({
+                maxClusterRadius: 120,
+                iconCreateFunction: function (cluster) {
+                    var markers = cluster.getAllChildMarkers();
+                    if (markers[0].distance) {
+                        var d = 0;
+                        for (var i = 0; i < markers.length; i++) {
+                            d += markers[i].distance;
+                        }
+                        d = d / markers.length;
+                        var color = self.helper.getColor(((d - min) / (max - min)) * 100, colors);
+                        if (!d || !min || !max) {
+                            var color = "rgb(0,50,182)";
+                        }
+                    }
+                    else {
+                        var color = "rgb(0,50,182)";
+                    }
+                    return L.divIcon({
+                        html: "<div class='clusterM' style='background-color:" + color + "'>" + markers.length + "</div>",
+                        className: 'mycluster',
+                        iconSize: L.point(40, 40)
+                    });
+                },
+                disableClusteringAtZoom: 20
+            })
+        } else {
+            self.markers1.cluster = L.markerClusterGroup({
+                disableClusteringAtZoom: 18
+            });
+        }
         self.map1.addLayer(self.markers1.cluster);
 
 
@@ -33,9 +63,39 @@ define(['js/lib/bootbox.min'], function (bootbox) {
         self.markers2.lMarkers = [];
         self.markers2.missing = [];
         self.map2.removeLayer(self.markers2.cluster);
-        self.markers2.cluster = L.markerClusterGroup({
-            disableClusteringAtZoom: 18
-        });
+        if (max) {
+            var colors = [[51, 159, 255], [10, 10, 10]];
+            self.markers2.cluster = L.markerClusterGroup({
+                maxClusterRadius: 120,
+                iconCreateFunction: function (cluster) {
+                    var markers = cluster.getAllChildMarkers();
+                    if (markers[0].distance) {
+                        var d = 0;
+                        for (var i = 0; i < markers.length; i++) {
+                            d += markers[i].distance;
+                        }
+                        d = d / markers.length;
+
+                        var color = self.helper.getColor(((d - min) / (max - min)) * 100, colors);
+                        if (!d || !min || !max) {
+                            var color = "rgb(0,50,182)";
+                        }
+                    } else {
+                        var color = "rgb(0,50,182)";
+                    }
+                    return L.divIcon({
+                        html: "<div class='clusterM' style='background-color:" + color + "'>" + markers.length + "</div>",
+                        className: 'mycluster',
+                        iconSize: L.point(40, 40)
+                    });
+                },
+                disableClusteringAtZoom: 20
+            })
+        } else {
+            self.markers2.cluster = L.markerClusterGroup({
+                disableClusteringAtZoom: 18
+            });
+        }
         self.map2.addLayer(self.markers2.cluster);
     };
 
@@ -61,7 +121,8 @@ define(['js/lib/bootbox.min'], function (bootbox) {
     };
 
     GeoHelper.prototype.download = function (strData, strFileName, strMimeType) {
-        var createObjectURL = (window.URL || window.webkitURL || {}).createObjectURL || function(){};
+        var createObjectURL = (window.URL || window.webkitURL || {}).createObjectURL || function () {
+            };
         var blob = null;
         var content = strData;
         var mimeString = "application/octet-stream";
@@ -71,12 +132,12 @@ define(['js/lib/bootbox.min'], function (bootbox) {
             window.MSBlobBuilder;
 
 
-        if(window.BlobBuilder){
+        if (window.BlobBuilder) {
             var bb = new BlobBuilder();
             bb.append(content);
             blob = bb.getBlob(mimeString);
-        }else{
-            blob = new Blob([content], {type : mimeString});
+        } else {
+            blob = new Blob([content], {type: mimeString});
         }
         var url = createObjectURL(blob);
         var a = document.createElement("a");
@@ -131,14 +192,14 @@ define(['js/lib/bootbox.min'], function (bootbox) {
         });
     };
 
-    GeoHelper.prototype.pushCoords = function (coords){
-        var allCoords=[];
-       for(var x=0;x<coords.length;x++){
+    GeoHelper.prototype.pushCoords = function (coords) {
+        var allCoords = [];
+        for (var x = 0; x < coords.length; x++) {
             if (typeof(coords[x][0]) == "object") {
-                allCoords=allCoords.concat(this.pushCoords(coords[x]));
+                allCoords = allCoords.concat(this.pushCoords(coords[x]));
             } else {
-                coords[x][0]=Math.round(coords[x][0]*1000000)/1000000; //to remove?
-                coords[x][1]=Math.round(coords[x][1]*1000000)/1000000; //to remove?
+                coords[x][0] = Math.round(coords[x][0] * 1000000) / 1000000; //to remove?
+                coords[x][1] = Math.round(coords[x][1] * 1000000) / 1000000; //to remove?
                 allCoords.push(coords[x]);
 
             }
@@ -200,7 +261,7 @@ define(['js/lib/bootbox.min'], function (bootbox) {
         return 'rgb(' + rgb[0] + ',' + rgb[1] + ',' + rgb[2] + ')';
     };
 
-    GeoHelper.prototype.insertMarker = function (map, lat, lng, markerNumber, mainMarkers, mapNumber, color, fast) {
+    GeoHelper.prototype.insertMarker = function (map, lat, lng, markerNumber, mainMarkers, mapNumber, color, fast, distance) {
         var self = this;
         if (!color) {
             color = 'rgb(14, 88, 202)';
@@ -220,12 +281,15 @@ define(['js/lib/bootbox.min'], function (bootbox) {
             mainMarkers.cluster.addLayer(m1);
             m1.indexMarker = Number(markerNumber + 1);
             m1.color = color;
-            if(!fast) {
+            if (!fast) {
                 m1.bindPopup("Marker " + Number(markerNumber + 1) + "<br><input type='button' value='Remove' class='btn btn-danger marker-delete-button'/>");
                 m1.on("popupopen", onPopupOpen);
                 mainMarkers.lMarkers.splice(markerNumber, 0, m1);
                 mainMarkers.markers.splice(markerNumber, 0, [lat, lng]);
             }
+        }
+        if (distance) {
+            m1.distance = distance;
         }
 
         if (mapNumber && !fast) {
