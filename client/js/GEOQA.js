@@ -679,12 +679,16 @@ define([
         vectorGrid.addTo(map);
         var temp = L.geoJson(data);
 
-        var allCoords=getCoords(data);
+        var allCoords=this.getCoords(data);
 
         if (map._container.id == "map1") {
             this.jsonMap1 = data;
             this.lMap1 = vectorGrid;
             this.jsonMap1.prop = this.UI.getProp(data);
+
+            var lng = temp.getBounds()._northEast.lng;
+            var zone = ((Math.floor((lng + 180) / 6) % 60) + 1);
+            self.projection=self.projection.split("32").join(zone);
             var res = proj4('WGS84', self.projection, [temp.getBounds()._southWest.lng, temp.getBounds()._southWest.lat]);
             var res1 = proj4('WGS84', self.projection, [temp.getBounds()._northEast.lng, temp.getBounds()._northEast.lat]);
             this.jsonMap1.extent = res[0] + " " + res[1] + " " + res1[0] + " " + res1[1];
@@ -957,24 +961,103 @@ define([
             }
         });
     };
+
+    GEOQA.prototype.getCoords = function (i) {
+        i = JSON.stringify(i);
+        i = i.match(/\[([*-9]+)\]/g);
+        i = i.join();
+        i = i.replace(/\[/g, '');
+        i = i.replace(/\]/g, '');
+        i = i.split(",");
+
+        var c = [];
+        for (var x = 0; x < i.length; x = x + 2) {
+            c.push([Number(i[x]), Number(i[x + 1])])
+        }
+        return c;
+    };
+
+    GEOQA.prototype.loadCoords = function (a, b) {
+        //  var a=[[45.49771957212775,9.112296786462249],[45.49787501891305,9.112893293539399],[45.497956467792406,9.112984970881437],[45.51269469238803,9.254884354425768],[45.51259087154552,9.254897736870701],[45.51273779946706,9.254677401757101],[45.43175401236009,9.248292293979846],[45.43149944990296,9.248719707183495],[45.431343725977165,9.248531400036715],[45.43849521561157,9.127848821239239],[45.43867648052525,9.127704893880166],[45.43876018074679,9.12788148909149],[45.46477981036893,9.19132451519824],[45.46478442319138,9.19081293306342],[45.46490950532482,9.190671842332836],[45.452929056968685,9.143290585475107],[45.45305095687032,9.14455782657621],[45.45284513335531,9.144469630638627],[45.500228184226835,9.18850485516794],[45.50034102525048,9.187978800943],[45.47209289756637,9.235755330576627],[45.47162527228278,9.236019236857613],[45.47220552617896,9.235642572052036],[45.434996633987005,9.184929440697836],[45.43499809161478,9.184713949119578]];
+
+        // var b=[[45.49772073240106,9.112298067515155],[45.49787554615267,9.11288404636602],[45.497977973009455,9.112982030814123],[45.512703468142746,9.254900894948747],[45.512581176175445,9.254915479460266],[45.512755687399505,9.254693945759385],[45.43175833954871,9.248296458162201],[45.431503026778046,9.248723767585972],[45.43134628518868,9.24853349838395],[45.43848615794997,9.127863680803529],[45.43868195920808,9.127700066053592],[45.43876091673599,9.127855634176484],[45.464783289509455,9.191340168812701],[45.46478857010845,9.190828034528778],[45.464922596740195,9.190696773925083],[45.45293136224112,9.143300883335286],[45.45305457621777,9.144562359762915],[45.45285374581775,9.144478289274076],[45.50022683763089,9.188508929558736],[45.50033915513342,9.187986820810067],[45.472095326561885,9.235752856244005],[45.47162476651772,9.236030632515167],[45.472208733711824,9.23561958398355],[45.43498595900374,9.184950727842562],[45.43498973086017,9.184700947127993]];
+
+        var self = this;
+        a.forEach(function (coords, index) {
+
+            var e1 = {};
+            e1.latlng = {};
+            e1.latlng.lat = a[index][0];
+            e1.latlng.lng = a[index][1];
+            e1.target = {};
+            e1.target._container = {};
+            e1.target._container.id = "map1";
+
+
+            var e2 = {};
+            e2.latlng = {};
+            e2.latlng.lat = b[index][0];
+            e2.latlng.lng = b[index][1];
+            e2.target = {};
+            e2.target._container = {};
+            e2.target._container.id = "map2";
+
+            self.map1.listenerClick(e1);
+            self.map2.listenerClick(e2);
+        });
+
+    };
+
+    GEOQA.prototype.verifyPoints = function () {
+        var self = this;
+        var diffs = [];
+        var coord_sx = [], coord_dx = [];
+        if (self.markers1.markers.length >= 4 && self.markers2.markers.length >= 4) {
+            var diff, x1a, x1b, y1a, y1b, x2a, x2b, y2a, y2b;
+
+
+            for (var x = 0; x < self.markers1.markers.length; x++) { //for each markers
+                for (var y = 0; y < self.markers1.markers.length; y++) { //push all coords
+                    if (y != x) { //avoid 1 per time 1,2,3,4 etc..
+                        coord_sx.push(self.markers1.markers[y]);
+                        coord_dx.push(self.markers2.markers[y]);
+                    }
+                }
+                var t = Transformation;
+
+                t.setPoints(coord_dx, coord_sx);
+
+
+                x1a = self.markers1.markers[x][0];
+                y1a = self.markers1.markers[x][1];
+                [x2a, y2a] = t.transform([x1a, y1a]);
+                diff = Math.sqrt(Math.pow(x2a - x1a, 2) + Math.pow(y2a - y1a, 2));
+
+                diffs.push(diff);
+
+                x1b = self.markers2.markers[x][0];
+                y1b = self.markers2.markers[x][1];
+                [x2b, y2b] = t.transform([x1b, y1b]);
+                diff = Math.sqrt(Math.pow(x2b - x1b, 2) + Math.pow(y2b - y1b, 2));
+
+                diffs.push(diff);
+            }
+
+        }
+        var min = Math.min.apply(Math, diffs);
+        var max = Math.max.apply(Math, diffs);
+        var n;
+        var normalized = [];
+        for (var x = 0; x < diffs.length; x++) {
+            n = (diffs[x] - min) / (max - min);
+            normalized.push(Number(n.toFixed(3)));
+        }
+
+        return normalized;
+    };
     return GEOQA;
-})
-;
+});
 
-function getCoords(i){
-    i=JSON.stringify(i);
-    i=i.match(/\[([*-9]+)\]/g );
-    i=i.join();
-    i=i.replace(/\[/g, '');
-    i=i.replace(/\]/g, '');
-    i=i.split(",");
-
-    var c=[];
-    for(var x=0;x<i.length;x=x+2){
-        c.push([Number(i[x]),Number(i[x+1])])
-    }
-    return c;
-}
 String.prototype.replaceAll = function(search, replacement) {
     var target = this;
     return target.replace(new RegExp(search, 'g'), replacement);

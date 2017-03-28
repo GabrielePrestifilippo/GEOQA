@@ -111,6 +111,20 @@ define(['jquery'], function ($) {
             }
         });
 
+
+        /**
+         * Open the menu to verify the points
+         */
+        $("#runMenuButton").click(function () {
+            var open = $("#runMenu").prop("open");
+            self.closeAllMenu();
+            if (!open) {
+                $("#runMenu").css("min-height", "100vh");
+                $("#runMenu").css("max-height", "1000px");
+                $("#runMenu").prop("open", true);
+            }
+        });
+
         /**
          * Clone a new tag menu to insert a new tag
          */
@@ -170,6 +184,9 @@ define(['jquery'], function ($) {
         $("#featuresMenu").css("max-height", "0px");
         $("#featuresMenu").css("min-height", "0px");
         $("#featuresMenu").prop("open", false);
+        $("#runMenu").css("max-height", "0px");
+        $("#runMenu").css("min-height", "0px");
+        $("#runMenu").prop("open", false);
     };
 
     /**

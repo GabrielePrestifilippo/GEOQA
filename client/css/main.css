@@ -473,3 +473,21 @@ li:before {
 .form-control[disabled], fieldset[disabled] .form-control {
     cursor: auto;
 }
+
+
+.cardinality{
+    float:left;
+    padding:5px;
+    text-align: left;
+    background-color: white;
+    width: 20%;
+    font-size: 16px;
+}
+.percentage{
+    float:left;
+    padding:5px;
+    text-align: left;
+    background-color: white;
+    width: 80%;
+    font-size: 16px;
+}
