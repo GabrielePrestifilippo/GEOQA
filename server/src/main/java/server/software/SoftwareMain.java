@@ -135,12 +135,17 @@ public class SoftwareMain {
                 risultato.set(numeroIterazione, c, parametriStimati.get(c));
             }
             risultato.set(numeroIterazione, 6, source.getNumeroPuntiOmologhi());
-            //OLD
+            try {
+                byte[] resultPoints = Utility.salvaOmologhi(source);
+                source.omologhiBeforeTransformation = resultPoints;
+                byte[] resultPoints1 = Utility.salvaOmologhi(target);
+                target.omologhiBeforeTransformation = resultPoints1;
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
             output = Mappa.creaCopia(source, "");
             Trasforma.conAffine(output, parametriStimati);
             risultato.set(numeroIterazione, 7, Stima.getVettoreScarti(output.getPuntiOmologhi(), target.getPuntiOmologhi()).stimaVarianza(6));
-
-
 
             if (transform) {
                 if (tabellaRelazioneLivelli != null) {
@@ -149,8 +154,6 @@ public class SoftwareMain {
                     Stima.FischerGeometrico(source, target, output, angolo, sigma, distanzaMax);
                 }
             }
-
-
             numeroIterazione++;
             if (source.getNumeroPuntiOmologhi() < 5) {
                 ripeti = false;
@@ -162,6 +165,7 @@ public class SoftwareMain {
         Trasforma.conAffine(source, parametriStimati);
         return "e;f;a;b;c;d;punti;varianza\r\n" + risultato.stampa();
     }
+
 
     public Mappa leggiMappa(byte[] layer, byte[] omologhi) {
         Mappa map = Utility.leggi(layer);
@@ -287,18 +291,10 @@ public class SoftwareMain {
         byte[] resultPoints = source.omologhiBeforeTransformation;
         byte[] resultPoints1 = target.omologhiBeforeTransformation;
 
-
         ResultJSON response = new ResultJSON();
         String statistiche = new Statistiche(source.getPuntiOmologhi(), target.getPuntiOmologhi()).stampa();
         System.out.println(statistiche);
-        try {
-            resultPoints = Utility.salvaOmologhi(source);
-            source.omologhiBeforeTransformation = resultPoints;
-            resultPoints1 = Utility.salvaOmologhi(target);
-            target.omologhiBeforeTransformation = resultPoints1;
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+
         response.setStatistics(statistiche);
 
         String points = "";
