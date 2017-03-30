@@ -6,3 +6,4 @@ client/.idea/
 .idea/workspace.xml
 server/GEOQA.iml
 server/GEOQA_Server.iml
+server/src/main/java/
