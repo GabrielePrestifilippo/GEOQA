@@ -160,8 +160,9 @@ define(['jquery'], function ($) {
                 $(this).parent().remove();
             })
         });
-
+        this.closeAllMenu();
         this.fillLayersList();
+
     };
 
     /**
@@ -370,12 +371,13 @@ define(['jquery'], function ($) {
     GeoUI.prototype.showStatistics = function (resultParam) {
         $("#resultData").show();
         $("#mediaDeltaX").val(String(resultParam[1]));
-        $("#varianzaDeltaX").val(String(resultParam[2]));
+        $("#varianzaDeltaX").val(String(Math.sqrt(parseFloat(resultParam[2].replace(',','.').replace(' ',''))).toFixed(3)));
         $("#mediaDeltaY").val(String(resultParam[3]));
-        $("#mediaDistanze").val(String(resultParam[4]));
-        $("#varianzaDistanze").val(String(resultParam[5]));
-        $("#distanzaMinima").val(String(resultParam[6]));
-        $("#distanzaMassima").val(String(resultParam[7]));
+        $("#varianzaDeltaY").val(String(Math.sqrt(parseFloat(resultParam[4].replace(',','.').replace(' ',''))).toFixed(3)));
+        $("#mediaDistanze").val(String(resultParam[5]));
+        $("#varianzaDistanze").val(String(Math.sqrt(parseFloat(resultParam[6].replace(',','.').replace(' ',''))).toFixed(3)));
+        $("#distanzaMinima").val(String(resultParam[7]));
+        $("#distanzaMassima").val(String(resultParam[8]));
     };
 
     return GeoUI;

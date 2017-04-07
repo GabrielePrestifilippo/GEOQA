@@ -137,7 +137,12 @@ define([
                 contentType: false,
                 cache: false,
                 success: function (res) {
-                    resolve(res);
+                    try {
+                        resolve(res);
+                    }catch(e){
+                        $("#loading").hide();
+                        alert("Error occurred:"+e);
+                    }
                 },
                 error: function (e) {
                     console.log(e);
@@ -463,7 +468,12 @@ define([
                 contentType: false,
                 cache: false,
                 success: function (res) {
-                    resolve(res);
+                    try {
+                        resolve(res);
+                    }catch(e){
+                        $("#loading").hide();
+                        alert("Error occurred:"+e);
+                    }
                 },
                 error: function (e) {
                     console.log(e);
@@ -681,6 +691,28 @@ define([
 
         var allCoords=this.getCoords(data);
 
+        if(allCoords.length>250000){
+            bootbox.confirm({
+                message: "Too many nodes were found on this layer. Please try with a smaller one",
+                buttons: {
+                    cancel: {
+                        label: 'Ok',
+                        className: 'btn-default'
+                    },
+                    confirm: {
+                        label: 'Contact-Us',
+                        className: 'btn-info'
+                    }
+                },
+                callback: function (result) {
+                    if (result) {
+                        location.href = "mailto:gabriele.prestifilippo@polimi.it";
+                    }
+                }
+            });
+            return;
+        }
+
         if (map._container.id == "map1") {
             this.jsonMap1 = data;
             this.lMap1 = vectorGrid;
@@ -693,15 +725,15 @@ define([
             var res1 = proj4('WGS84', self.projection, [temp.getBounds()._northEast.lng, temp.getBounds()._northEast.lat]);
             this.jsonMap1.extent = res[0] + " " + res[1] + " " + res1[0] + " " + res1[1];
             this.UI.addPropToMenu(1, this.jsonMap1.prop);
-           /*
-            var allCoords = [];
-            data.features.forEach(function (f) {
-                if (f.geometry && f.geometry.coordinates && f.geometry.coordinates.length > 0)
-                    allCoords = allCoords.concat(self.helper.pushCoords(f.geometry.coordinates));
+            /*
+             var allCoords = [];
+             data.features.forEach(function (f) {
+             if (f.geometry && f.geometry.coordinates && f.geometry.coordinates.length > 0)
+             allCoords = allCoords.concat(self.helper.pushCoords(f.geometry.coordinates));
 
-            });
+             });
 
-*/
+             */
             var minLat = allCoords.reduce(function (min, arr) {
                 return min <= arr[0] ? min : arr[0];
             }, Infinity);
@@ -742,14 +774,14 @@ define([
             this.jsonMap2.extent = res[0] + " " + res[1] + " " + res1[0] + " " + res1[1];
             this.UI.addPropToMenu(2, this.jsonMap2.prop);
 
-/*
-            var allCoords = [];
-            data.features.forEach(function (f) {
-                if (f.geometry && f.geometry.coordinates && f.geometry.coordinates.length > 0)
-                    allCoords = allCoords.concat(self.helper.pushCoords(f.geometry.coordinates));
+            /*
+             var allCoords = [];
+             data.features.forEach(function (f) {
+             if (f.geometry && f.geometry.coordinates && f.geometry.coordinates.length > 0)
+             allCoords = allCoords.concat(self.helper.pushCoords(f.geometry.coordinates));
 
-            });
-*/
+             });
+             */
             this.jsonMap2.coords = allCoords;
 
             var minLat = allCoords.reduce(function (min, arr) {
@@ -1013,11 +1045,32 @@ define([
         var diffs = [];
         var coord_sx = [], coord_dx = [];
         if (self.markers1.markers.length >= 4 && self.markers2.markers.length >= 4) {
+            if(self.markers1.markers.length > 100){
+                bootbox.confirm({
+                    message: "Too many points found. Only the first 100 will be considered. " +
+                    "For a better warping, contact us",
+                    buttons: {
+                        cancel: {
+                            label: 'Ok',
+                            className: 'btn-default'
+                        },
+                        confirm: {
+                            label: 'Contact-Us',
+                            className: 'btn-info'
+                        }
+                    },
+                    callback: function (result) {
+                        if (result) {
+                            location.href = "mailto:gabriele.prestifilippo@polimi.it";
+                        }
+                    }
+                });
+            }
             var diff, x1a, x1b, y1a, y1b, x2a, x2b, y2a, y2b;
 
-
-            for (var x = 0; x < self.markers1.markers.length; x++) { //for each markers
-                for (var y = 0; y < self.markers1.markers.length; y++) { //push all coords
+            var min=Math.min(self.markers1.markers.length,100);
+            for (var x = 0; x < min; x++) { //for each markers
+                for (var y = 0; y < min; y++) { //push all coords
                     if (y != x) { //avoid 1 per time 1,2,3,4 etc..
                         coord_sx.push(self.markers1.markers[y]);
                         coord_dx.push(self.markers2.markers[y]);
@@ -1049,7 +1102,7 @@ define([
         var n;
         var normalized = [];
         for (var x = 0; x < diffs.length; x++) {
-            n = (diffs[x] - min) / (max - min);
+            n = (diffs[x] - min) / (max - min)*100;
             normalized.push(Number(n.toFixed(3)));
         }
 

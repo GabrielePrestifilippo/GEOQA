@@ -93,7 +93,7 @@
                     </div>
 
                     <div class="featuresTag">
-                        <input class="form-control tagMultiple osmTag" type="text" value="landuse=forest">
+                        <input class="form-control tagMultiple osmTag" type="text" value="landuse=construction">
                         <i onclick="$(this).parent().remove()" class="fa fa-minus-circle deleteAssociation"
                            aria-hidden="true"></i>
                     </div>
@@ -185,7 +185,7 @@
 <div id="banner">
     <div id="openMenu"><i class="fa fa-bars" style="font-size: 24px" aria-hidden="true"></i></div>
     <div id="doubleViewButton"><i class="fa fa-backward" style="font-size: 24px" aria-hidden="true"></i></div>
-    <div id="logo"><img style="max-height: 100px; padding: 10px;" src="images/MAW_logo.png"> Map Assessment and Warping</div>
+    <div id="logo"><img style="max-height: 90px; padding: 10px;" src="images/MAW_logo.png"> Map Assessment and Warping</div>
 </div>
 <div id="messageContainer" style="display: none; opacity: 0;">Selection performed</div>
 <div id="page">
@@ -225,7 +225,7 @@
             <input id="mediaDeltaX" type="text" disabled class="form-control">
         </div>
         <div class="input-group">
-            <span class="input-group-addon">Delta X Variance</span>
+            <span class="input-group-addon">Delta X St. Dev.</span>
             <input id="varianzaDeltaX" type="text" disabled class="form-control">
         </div>
         <div class="input-group">
@@ -233,11 +233,15 @@
             <input id="mediaDeltaY" type="text" disabled class="form-control">
         </div>
         <div class="input-group">
+            <span class="input-group-addon">Delta Y St. Dev.</span>
+            <input id="varianzaDeltaY" type="text" disabled class="form-control">
+        </div>
+        <div class="input-group">
             <span class="input-group-addon">Mean Distances</span>
             <input id="mediaDistanze" type="text" disabled class="form-control">
         </div>
         <div class="input-group">
-            <span class="input-group-addon">Distances Variance</span>
+            <span class="input-group-addon">Distances St. Dev.</span>
             <input id="varianzaDistanze" type="text" disabled class="form-control">
         </div>
         <div class="input-group">
